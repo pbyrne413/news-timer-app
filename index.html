@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Reading Timer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>📰 News Reading Timer</h1>
+            <p>Limit your daily news consumption</p>
+            <div class="status-indicator">
+                <span id="connection-status" class="status-offline">🔴 Offline Mode</span>
+            </div>
+            <button id="settings-btn" class="btn btn-secondary settings-btn">⚙️ Settings</button>
+        </header>
+
+        <div class="timer-section">
+            <div class="main-timer-display">
+                <h3>Total Time Remaining</h3>
+                <div class="time-display">
+                    <span id="total-time-left">30:00</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="total-progress"></div>
+                </div>
+            </div>
+
+
+            <div class="controls">
+                <button id="start-btn" class="btn btn-primary">Start Timer</button>
+                <button id="pause-btn" class="btn btn-secondary" disabled>Pause</button>
+                <button id="reset-btn" class="btn btn-secondary">Reset All</button>
+            </div>
+        </div>
+
+
+        <div class="stats-section">
+            <h3>Today's Usage</h3>
+            <div class="stats">
+                <div class="stat">
+                    <span class="stat-label">Time Used:</span>
+                    <span id="time-used">0:00</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Sessions:</span>
+                    <span id="sessions-count">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Remaining:</span>
+                    <span id="time-remaining">15:00</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="progress-section">
+            <h3>Source Progress</h3>
+            <p class="progress-instruction">Click on a source to automatically start its timer:</p>
+            <div class="progress-grid">
+                <div class="progress-item" data-source="bbc-football">
+                    <div class="progress-info">
+                        <span class="progress-icon">⚽</span>
+                        <span class="progress-label">BBC Football</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="bbc-football-progress"></div>
+                    </div>
+                    <div class="progress-time">
+                        <span id="bbc-football-used">0:00</span> / <span id="bbc-football-total">5:00</span>
+                    </div>
+                </div>
+
+                <div class="progress-item" data-source="bbc-headlines">
+                    <div class="progress-info">
+                        <span class="progress-icon">📰</span>
+                        <span class="progress-label">BBC Headlines</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="bbc-headlines-progress"></div>
+                    </div>
+                    <div class="progress-time">
+                        <span id="bbc-headlines-used">0:00</span> / <span id="bbc-headlines-total">5:00</span>
+                    </div>
+                </div>
+
+                <div class="progress-item" data-source="rte-headlines">
+                    <div class="progress-info">
+                        <span class="progress-icon">🇮🇪</span>
+                        <span class="progress-label">RTE Headlines</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="rte-headlines-progress"></div>
+                    </div>
+                    <div class="progress-time">
+                        <span id="rte-headlines-used">0:00</span> / <span id="rte-headlines-total">5:00</span>
+                    </div>
+                </div>
+
+                <div class="progress-item" data-source="guardian-headlines">
+                    <div class="progress-info">
+                        <span class="progress-icon">🛡️</span>
+                        <span class="progress-label">Guardian Headlines</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="guardian-headlines-progress"></div>
+                    </div>
+                    <div class="progress-time">
+                        <span id="guardian-headlines-used">0:00</span> / <span id="guardian-headlines-total">5:00</span>
+                    </div>
+                </div>
+
+                <div class="progress-item" data-source="guardian-opinion">
+                    <div class="progress-info">
+                        <span class="progress-icon">💭</span>
+                        <span class="progress-label">Guardian Opinion</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="guardian-opinion-progress"></div>
+                    </div>
+                    <div class="progress-time">
+                        <span id="guardian-opinion-used">0:00</span> / <span id="guardian-opinion-total">5:00</span>
+                    </div>
+                </div>
+
+                <div class="progress-item" data-source="cnn">
+                    <div class="progress-info">
+                        <span class="progress-icon">🌍</span>
+                        <span class="progress-label">CNN</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="cnn-progress"></div>
+                    </div>
+                    <div class="progress-time">
+                        <span id="cnn-used">0:00</span> / <span id="cnn-total">5:00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="notification-section">
+            <p id="notification" class="notification hidden"></p>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ Settings</h2>
+                <button id="close-modal" class="close-btn">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h3>Daily Settings</h3>
+                    <div class="setting">
+                        <label for="total-time-limit">Total daily time limit (minutes):</label>
+                        <input type="number" id="total-time-limit" value="30" min="1" max="120">
+                    </div>
+                    <div class="setting">
+                        <label for="auto-start">Auto-start timer:</label>
+                        <input type="checkbox" id="auto-start">
+                    </div>
+                    <div class="setting">
+                        <button id="distribute-time" class="btn btn-secondary">Distribute Time Evenly</button>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Individual Source Allocations</h3>
+                    <div class="allocation-grid">
+                        <div class="allocation-item">
+                            <label for="bbc-football-alloc">⚽ BBC Football:</label>
+                            <input type="number" id="bbc-football-alloc" value="5" min="0" max="30"
+                                data-source="bbc-football">
+                            <span>minutes</span>
+                        </div>
+                        <div class="allocation-item">
+                            <label for="bbc-headlines-alloc">📰 BBC Headlines:</label>
+                            <input type="number" id="bbc-headlines-alloc" value="5" min="0" max="30"
+                                data-source="bbc-headlines">
+                            <span>minutes</span>
+                        </div>
+                        <div class="allocation-item">
+                            <label for="rte-headlines-alloc">🇮🇪 RTE Headlines:</label>
+                            <input type="number" id="rte-headlines-alloc" value="5" min="0" max="30"
+                                data-source="rte-headlines">
+                            <span>minutes</span>
+                        </div>
+                        <div class="allocation-item">
+                            <label for="guardian-headlines-alloc">🛡️ Guardian Headlines:</label>
+                            <input type="number" id="guardian-headlines-alloc" value="5" min="0" max="30"
+                                data-source="guardian-headlines">
+                            <span>minutes</span>
+                        </div>
+                        <div class="allocation-item">
+                            <label for="guardian-opinion-alloc">💭 Guardian Opinion:</label>
+                            <input type="number" id="guardian-opinion-alloc" value="5" min="0" max="30"
+                                data-source="guardian-opinion">
+                            <span>minutes</span>
+                        </div>
+                        <div class="allocation-item">
+                            <label for="cnn-alloc">🌍 CNN:</label>
+                            <input type="number" id="cnn-alloc" value="5" min="0" max="30" data-source="cnn">
+                            <span>minutes</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Advanced Options</h3>
+                    <div class="setting">
+                        <button id="add-source-btn" class="btn btn-secondary">Add New Source (Math Challenge)</button>
+                        <p class="setting-description">Adding sources is discouraged. You must solve simultaneous
+                            equations to proceed.</p>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Notifications</h3>
+                    <div class="setting">
+                        <button id="request-notifications" class="btn btn-secondary">Enable Notifications</button>
+                        <p class="setting-description">Allow browser notifications for timer alerts.</p>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>Data Management</h3>
+                    <div class="setting">
+                        <button id="export-data" class="btn btn-secondary">Export Settings</button>
+                        <button id="import-data" class="btn btn-secondary">Import Settings</button>
+                    </div>
+                    <div class="setting">
+                        <button id="clear-all-data" class="btn btn-secondary">Clear All Data</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button id="save-settings" class="btn btn-primary">Save Settings</button>
+                <button id="cancel-settings" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Math Challenge Modal -->
+    <div id="math-challenge-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🧮 Math Challenge Required</h2>
+                <button id="close-math-modal" class="close-btn">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <div class="challenge-section">
+                    <h3>Adding sources is discouraged!</h3>
+                    <p>To add a new source, you must prove you understand the consequences by solving these simultaneous
+                        equations:</p>
+
+                    <div class="equations">
+                        <div class="equation">
+                            <span id="equation1">2x + 3y = 13</span>
+                        </div>
+                        <div class="equation">
+                            <span id="equation2">x - y = 1</span>
+                        </div>
+                    </div>
+
+                    <div class="solution-inputs">
+                        <div class="input-group">
+                            <label for="x-value">x =</label>
+                            <input type="number" id="x-value" placeholder="?" step="0.1">
+                        </div>
+                        <div class="input-group">
+                            <label for="y-value">y =</label>
+                            <input type="number" id="y-value" placeholder="?" step="0.1">
+                        </div>
+                    </div>
+
+                    <div class="challenge-warning">
+                        <p>⚠️ <strong>Warning:</strong> Adding more sources will reduce your time per source and may
+                            lead to information overload!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button id="check-math-answer" class="btn btn-primary">Check Answer</button>
+                <button id="cancel-math-challenge" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="api.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
