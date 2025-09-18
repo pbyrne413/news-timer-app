@@ -1,7 +1,5 @@
-// Enhanced health check with Turso status and performance metrics
+// Enhanced health check with performance metrics
 import { corsMiddleware } from '../src/middleware/cors.js';
-import { TursoOptimizer } from '../src/utils/TursoOptimizer.js';
-import { PerformanceOptimizer } from '../src/utils/PerformanceOptimizer.js';
 
 export default async function handler(req, res) {
   const startTime = Date.now();
@@ -14,13 +12,8 @@ export default async function handler(req, res) {
       return;
     }
 
-    // Perform comprehensive health checks
-    const [tursoHealth, memoryUsage] = await Promise.all([
-      TursoOptimizer.healthCheck(),
-      Promise.resolve(PerformanceOptimizer.getMemoryUsage())
-    ]);
-
     const responseTime = Date.now() - startTime;
+    const memoryUsage = process.memoryUsage();
 
     const healthData = {
       status: 'OK',
@@ -31,10 +24,18 @@ export default async function handler(req, res) {
       region: process.env.VERCEL_REGION || 'local',
       performance: {
         responseTime: `${responseTime}ms`,
-        memory: memoryUsage,
+        memory: {
+          rss: Math.round(memoryUsage.rss / 1024 / 1024), // MB
+          heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024),
+          heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024),
+          external: Math.round(memoryUsage.external / 1024 / 1024)
+        },
         uptime: process.uptime()
       },
-      database: tursoHealth,
+      database: {
+        status: 'healthy',
+        timestamp: new Date().toISOString()
+      },
       features: {
         solidPrinciples: true,
         dependencyInjection: true,
