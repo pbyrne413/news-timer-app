@@ -1,5 +1,6 @@
 import { AppError } from './errorHandler.js';
 import { config } from '../config/index.js';
+import { DateUtils } from '../utils/DateUtils.js';
 
 // Simple authentication middleware for sensitive operations
 // In a real application, you'd use proper JWT or session-based auth
@@ -9,7 +10,7 @@ const FAILED_ATTEMPTS = new Map();
 
 // Generate a simple admin token (in production, use proper JWT)
 export const generateAdminToken = () => {
-  const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
+  const token = Math.random().toString(36).substring(2) + DateUtils.getCurrentTime().toString(36);
   ADMIN_TOKENS.add(token);
   
   // Token expires in 1 hour
@@ -22,7 +23,7 @@ export const generateAdminToken = () => {
 
 // Rate limiting for failed authentication attempts
 const checkRateLimit = (clientId) => {
-  const now = Date.now();
+  const now = DateUtils.getCurrentTime();
   const attempts = FAILED_ATTEMPTS.get(clientId);
   
   if (!attempts) {
@@ -118,7 +119,7 @@ export const getDevToken = (req, res) => {
 
 // Cleanup old failed attempts periodically
 setInterval(() => {
-  const now = Date.now();
+  const now = DateUtils.getCurrentTime();
   for (const [clientId, attempts] of FAILED_ATTEMPTS.entries()) {
     if (now - attempts.lastAttempt > config.security.lockoutDuration * 2) {
       FAILED_ATTEMPTS.delete(clientId);

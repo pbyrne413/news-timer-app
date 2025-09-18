@@ -1,4 +1,6 @@
 // Base service class implementing common patterns
+import { DateUtils } from '../utils/DateUtils.js';
+
 export class BaseService {
   constructor(database) {
     if (!database) {
@@ -17,8 +19,13 @@ export class BaseService {
     }
   }
 
-  // Helper method for date operations
+  // Helper method for date operations using Luxon
   getCurrentDate() {
-    return new Date().toISOString().split('T')[0];
+    return DateUtils.getCurrentDate();
+  }
+
+  // Helper method for timestamps
+  getCurrentTimestamp() {
+    return DateUtils.getCurrentTimestamp();
   }
 }

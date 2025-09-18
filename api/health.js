@@ -1,5 +1,6 @@
 // Vercel serverless function for health check
 import { corsMiddleware } from '../src/middleware/cors.js';
+import { DateUtils } from '../src/utils/DateUtils.js';
 
 export default function handler(req, res) {
   // Apply CORS middleware
@@ -11,7 +12,7 @@ export default function handler(req, res) {
 
   res.json({ 
     status: 'OK', 
-    timestamp: new Date().toISOString(),
+    timestamp: DateUtils.getCurrentTimestamp(),
     architecture: 'refactored'
   });
 }
