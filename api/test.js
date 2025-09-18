@@ -1,5 +1,4 @@
-module.exports = async function handler(req, res) {
-  // Set CORS headers
+module.exports = function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -9,11 +8,10 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  if (req.method === 'POST') {
-    // For now, just return success
-    res.json({ success: true });
-  } else {
-    res.setHeader('Allow', ['POST']);
-    res.status(405).end(`Method ${req.method} Not Allowed`);
-  }
+  res.json({ 
+    status: 'OK', 
+    message: 'API is working!',
+    timestamp: new Date().toISOString() 
+  });
 }
+

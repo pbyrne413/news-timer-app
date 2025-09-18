@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "A timer app to limit daily news reading time",
   "main": "server.js",
-  "type": "module",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",

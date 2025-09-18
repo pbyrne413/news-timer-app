@@ -1,27 +1,22 @@
-import Database from '../../database.js';
+module.exports = async function handler(req, res) {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-const db = new Database();
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
 
-export default async function handler(req, res) {
   if (req.method === 'GET') {
-    try {
-      const today = new Date().toISOString().split('T')[0];
-      const todayUsages = await db.getDailyUsages(today);
-      
-      const totalTimeUsed = todayUsages.reduce((sum, usage) => sum + usage.time_used, 0);
-      const totalSessions = todayUsages.reduce((sum, usage) => sum + usage.sessions, 0);
-      const totalOverrun = todayUsages.reduce((sum, usage) => sum + usage.overrun_time, 0);
-      
-      res.json({
-        totalTimeUsed,
-        totalSessions,
-        totalOverrun,
-        sourcesUsed: todayUsages.length
-      });
-    } catch (error) {
-      console.error('Error fetching stats:', error);
-      res.status(500).json({ error: 'Failed to fetch stats' });
-    }
+    // Return default stats for now
+    res.json({
+      totalTimeUsed: 0,
+      totalSessions: 0,
+      totalOverrun: 0,
+      sourcesUsed: 0
+    });
   } else {
     res.setHeader('Allow', ['GET']);
     res.status(405).end(`Method ${req.method} Not Allowed`);

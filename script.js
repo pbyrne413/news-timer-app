@@ -12,7 +12,7 @@ class NewsTimer {
         this.sourceTimers = {};
         
         this.initializeElements();
-        this.loadDataFromAPI();
+        this.loadDataFromAPI(); // Try API first, fallback to localStorage
         this.setupEventListeners();
         // Don't auto-request notification permission - let user do it manually
     }
@@ -44,6 +44,7 @@ class NewsTimer {
             this.dailyTimeUsed = sources.reduce((sum, source) => sum + source.used, 0);
             
             // Update UI
+            this.initializeProgressElements(); // Initialize progress elements after data is loaded
             this.updateDisplay();
             this.loadSettingsIntoModal();
             
@@ -57,6 +58,7 @@ class NewsTimer {
             this.showNotification('Server unavailable. Using offline mode with local storage.', 'warning');
             // Fallback to localStorage
             this.loadDataFromLocalStorage();
+            this.initializeProgressElements(); // Initialize progress elements after data is loaded
             this.isOnlineMode = false;
             this.updateConnectionStatus(false);
         }
@@ -156,8 +158,6 @@ class NewsTimer {
         this.sourceTotalElements = {};
         this.sourceAllocationElements = {};
         this.progressItems = {};
-        
-        this.initializeProgressElements();
     }
     
     initializeProgressElements() {
