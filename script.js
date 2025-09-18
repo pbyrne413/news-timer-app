@@ -42,39 +42,58 @@ class NewsTimer {
     
     async loadDataFromAPI() {
         try {
-            console.log('loadDataFromAPI - Starting API calls...');
-            
             // Load sources and settings from API
             const [sources, settings] = await Promise.all([
                 window.apiService.getSources(),
                 window.apiService.getSettings()
             ]);
             
-            console.log('loadDataFromAPI - API calls completed');
-            console.log('loadDataFromAPI - Raw sources data:', sources);
-            
             // Update source timers from API data
-            this.sourceTimers = {};
-            sources.forEach(source => {
-                this.sourceTimers[source.key] = {
-                    allocated: source.allocated,
-                    used: source.used,
-                    sessions: source.sessions,
-                    overrunTime: source.overrunTime || 0
-                };
-            });
+            // Don't overwrite local state if timer is currently running
+            if (!this.isRunning) {
+                this.sourceTimers = {};
+                sources.forEach(source => {
+                    this.sourceTimers[source.key] = {
+                        allocated: source.allocated,
+                        used: source.used,
+                        sessions: source.sessions,
+                        overrunTime: source.overrunTime || 0
+                    };
+                    
+                    // Create DOM elements for sources that don't exist in the HTML
+                    if (!document.querySelector(`.progress-item[data-source="${source.key}"]`)) {
+                        this.addSourceToUI(source.key, source.name, source.url, source.icon);
+                    }
+                });
+            } else {
+                // If timer is running, only update non-current sources to avoid jumps
+                sources.forEach(source => {
+                    if (source.key !== this.currentSource) {
+                        this.sourceTimers[source.key] = {
+                            allocated: source.allocated,
+                            used: source.used,
+                            sessions: source.sessions,
+                            overrunTime: source.overrunTime || 0
+                        };
+                        
+                        // Create DOM elements for sources that don't exist in the HTML
+                        if (!document.querySelector(`.progress-item[data-source="${source.key}"]`)) {
+                            this.addSourceToUI(source.key, source.name, source.url, source.icon);
+                        }
+                    }
+                });
+            }
             
             // Update settings
             this.totalTimeLimit = settings.totalTimeLimit;
-            this.autoStart = settings.autoStart;
+            this.autoStart = Boolean(settings.autoStart); // Convert integer to boolean
             
             // Calculate daily time used
-            this.dailyTimeUsed = sources.reduce((sum, source) => sum + source.used, 0);
+            // Don't overwrite if timer is currently running to avoid jumps
+            if (!this.isRunning) {
+                this.dailyTimeUsed = sources.reduce((sum, source) => sum + source.used, 0);
+            }
             
-            // Debug logging
-            console.log('loadDataFromAPI - sources:', sources.map(s => ({key: s.key, used: s.used})));
-            console.log('loadDataFromAPI - dailyTimeUsed:', this.dailyTimeUsed);
-            console.log('loadDataFromAPI - sourceTimers:', this.sourceTimers);
             
             // Update UI
             this.initializeProgressElements(); // Initialize progress elements after data is loaded
@@ -320,6 +339,16 @@ class NewsTimer {
             return;
         }
         
+        // Don't start if already running (unless we're switching sources)
+        if (this.isRunning && this.interval) {
+            return;
+        }
+        
+        // Clear any existing interval to prevent multiple timers
+        if (this.interval) {
+            clearInterval(this.interval);
+        }
+        
         this.isRunning = true;
         this.startBtn.disabled = true;
         this.pauseBtn.disabled = false;
@@ -484,8 +513,6 @@ class NewsTimer {
     }
     
     updateDisplay() {
-        // Debug logging
-        console.log('updateDisplay - totalTimeLimit:', this.totalTimeLimit, 'dailyTimeUsed:', this.dailyTimeUsed);
         
         // Update total time display
         const totalMinutes = Math.floor(this.totalTimeLimit / 60);
@@ -592,41 +619,58 @@ class NewsTimer {
     
     async distributeTimeEvenly() {
         console.log('distributeTimeEvenly called');
-        // Get the current value from the input field, not the stored value
-        const totalMinutes = parseInt(this.totalTimeLimitInput.value) || 30;
-        this.totalTimeLimit = totalMinutes * 60; // Update the stored value too
-        const minutesPerSource = Math.floor(totalMinutes / Object.keys(this.sourceTimers).length);
-        const remainder = totalMinutes % Object.keys(this.sourceTimers).length;
-        
-        let index = 0;
-        const updatePromises = [];
-        
-        Object.keys(this.sourceTimers).forEach(source => {
-            let allocation = minutesPerSource;
-            if (index < remainder) {
-                allocation += 1; // Distribute remainder
-            }
-            this.sourceTimers[source].allocated = allocation * 60;
-            
-            // Update on server
-            updatePromises.push(
-                window.apiService.updateSourceAllocation(source, allocation * 60)
-            );
-            
-            index++;
-        });
         
         try {
+            // Get the current value from the input field, not the stored value
+            const totalMinutes = parseInt(this.totalTimeLimitInput.value) || 30;
+            this.totalTimeLimit = totalMinutes * 60; // Update the stored value too
+            
+            // Fetch current sources from API to ensure we have the complete list
+            const sources = await window.apiService.getSources();
+            console.log('distributeTimeEvenly - sources from API:', sources);
+            
+            if (sources.length === 0) {
+                this.showNotification('No sources found to distribute time.', 'warning');
+                return;
+            }
+            
+            const minutesPerSource = Math.floor(totalMinutes / sources.length);
+            const remainder = totalMinutes % sources.length;
+            
+            let index = 0;
+            const updatePromises = [];
+            
+            sources.forEach(source => {
+                let allocation = minutesPerSource;
+                if (index < remainder) {
+                    allocation += 1; // Distribute remainder
+                }
+                
+                // Update local state
+                if (this.sourceTimers[source.key]) {
+                    this.sourceTimers[source.key].allocated = allocation * 60;
+                }
+                
+                // Update on server
+                updatePromises.push(
+                    window.apiService.updateSourceAllocation(source.key, allocation * 60)
+                );
+                
+                index++;
+            });
+            
             await Promise.all(updatePromises);
+            console.log('distributeTimeEvenly - all allocations updated');
+            
+            // Update modal inputs if modal is open
+            this.loadSettingsIntoModal();
+            this.updateDisplay();
+            this.showNotification(`Time distributed evenly: ${minutesPerSource} minutes per source.`, 'success');
+            
         } catch (error) {
-            console.error('Failed to update source allocations:', error);
+            console.error('Failed to distribute time evenly:', error);
+            this.showNotification('Failed to distribute time evenly.', 'error');
         }
-        
-        // Update modal inputs if modal is open
-        this.loadSettingsIntoModal();
-        
-        this.updateDisplay();
-        this.showNotification(`Time distributed evenly: ${minutesPerSource} minutes per source.`, 'success');
     }
     
     async updateSourceAllocationFromModal(source) {
@@ -768,13 +812,21 @@ class NewsTimer {
     }
     
     generateMathChallenge() {
-        // Generate random coefficients for simultaneous equations
+        // Generate random integer solutions first
+        const x = Math.floor(Math.random() * 20) - 10; // -10 to 10
+        const y = Math.floor(Math.random() * 20) - 10; // -10 to 10
+        
+        // Generate random coefficients that will give integer solutions
         const a = Math.floor(Math.random() * 5) + 1;
         const b = Math.floor(Math.random() * 5) + 1;
         const c = Math.floor(Math.random() * 5) + 1;
         const d = Math.floor(Math.random() * 5) + 1;
         
-        // Calculate solutions
+        // Calculate constants (these will be integers since x, y, a, b, c, d are integers)
+        const e = a * x + b * y;
+        const f = c * x + d * y;
+        
+        // Calculate determinant
         const det = a * d - b * c;
         if (det === 0) {
             // Regenerate if determinant is zero
@@ -782,11 +834,9 @@ class NewsTimer {
             return;
         }
         
-        const e = Math.floor(Math.random() * 20) + 1;
-        const f = Math.floor(Math.random() * 20) + 1;
-        
-        this.correctX = (d * e - b * f) / det;
-        this.correctY = (a * f - c * e) / det;
+        // Store the correct integer solutions
+        this.correctX = x;
+        this.correctY = y;
         
         // Display equations
         this.equation1Display.textContent = `${a}x + ${b}y = ${e}`;
@@ -802,9 +852,9 @@ class NewsTimer {
             return;
         }
         
-        const tolerance = 0.1;
-        const xCorrect = Math.abs(userX - this.correctX) < tolerance;
-        const yCorrect = Math.abs(userY - this.correctY) < tolerance;
+        // Since solutions are now integers, check for exact matches
+        const xCorrect = Math.abs(userX - this.correctX) < 0.01;
+        const yCorrect = Math.abs(userY - this.correctY) < 0.01;
         
         if (xCorrect && yCorrect) {
             this.showNotification('Correct! You may proceed to add a new source.', 'success');
@@ -865,7 +915,7 @@ class NewsTimer {
             };
             
             // Add to UI
-            this.addSourceToUI(newSource.key, newSource.name, newSource.url);
+            this.addSourceToUI(newSource.key, newSource.name, newSource.url, newSource.icon);
             
             // Redistribute time evenly
             await this.distributeTimeEvenly();
@@ -887,7 +937,7 @@ class NewsTimer {
         }
     }
     
-    addSourceToUI(sourceKey, sourceName, sourceUrl = null) {
+    addSourceToUI(sourceKey, sourceName, sourceUrl = null, sourceIcon = '📰') {
         // Sanitize inputs to prevent XSS
         const sanitizedSourceKey = this.sanitizeHtml(sourceKey);
         const sanitizedSourceName = this.sanitizeHtml(sourceName);
@@ -905,7 +955,7 @@ class NewsTimer {
         
         const progressIcon = document.createElement('span');
         progressIcon.className = 'progress-icon';
-        progressIcon.textContent = '📰';
+        progressIcon.textContent = sourceIcon;
         
         const progressLabel = document.createElement('span');
         progressLabel.className = 'progress-label';
