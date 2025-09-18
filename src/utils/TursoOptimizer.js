@@ -8,8 +8,12 @@ export class TursoOptimizer {
   
   // Optimize Turso connection for serverless
   static getOptimizedClient() {
+    // SECURITY: Use hash of auth token instead of raw token in cache key
+    const crypto = require('crypto');
+    const authTokenHash = config.database.authToken ? 
+      crypto.createHash('sha256').update(config.database.authToken).digest('hex').substring(0, 8) : 'no-auth';
     
-    const connectionKey = `${config.database.url}_${config.database.authToken}`;
+    const connectionKey = `${config.database.url}_${authTokenHash}`;
     
     if (this.connectionPool.has(connectionKey)) {
       return this.connectionPool.get(connectionKey);
@@ -37,7 +41,12 @@ export class TursoOptimizer {
       // Use Turso's batch API for multiple operations
       return await client.batch(operations);
     } catch (error) {
-      console.error('Turso batch operation failed:', error);
+      // SECURITY: Sanitize error logging to prevent information disclosure
+      console.error('Turso batch operation failed:', {
+        message: error.message,
+        code: error.code,
+        timestamp: new Date().toISOString()
+      });
       throw error;
     }
   }

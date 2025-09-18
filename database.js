@@ -11,12 +11,27 @@ class Database {
       syncInterval: 60, // Sync every 60 seconds for embedded replicas
     });
     this._initialized = false;
+    this._initializing = false; // SECURITY: Prevent race conditions
   }
 
   async ensureInitialized() {
-    if (!this._initialized) {
+    // SECURITY: Prevent race conditions during initialization
+    if (this._initialized) return;
+    
+    if (this._initializing) {
+      // Wait for ongoing initialization to complete
+      while (this._initializing && !this._initialized) {
+        await new Promise(resolve => setTimeout(resolve, 10));
+      }
+      return;
+    }
+    
+    this._initializing = true;
+    try {
       await this.initializeTables();
       this._initialized = true;
+    } finally {
+      this._initializing = false;
     }
   }
 
@@ -75,7 +90,24 @@ class Database {
     const existingSources = await this.client.execute('SELECT COUNT(*) as count FROM news_sources');
     if (existingSources.rows[0].count > 0) return;
 
-    // Create default news sources
+    // SECURITY: Validate default data to prevent injection
+    const validateDefaultSource = (source) => {
+      if (!source.key || typeof source.key !== 'string' || source.key.length > 50) {
+        throw new Error('Invalid source key');
+      }
+      if (!source.name || typeof source.name !== 'string' || source.name.length > 100) {
+        throw new Error('Invalid source name');
+      }
+      if (!source.icon || typeof source.icon !== 'string' || source.icon.length > 10) {
+        throw new Error('Invalid source icon');
+      }
+      if (!Number.isInteger(source.defaultAllocation) || source.defaultAllocation < 60 || source.defaultAllocation > 3600) {
+        throw new Error('Invalid default allocation');
+      }
+      return source;
+    };
+
+    // Create default news sources with validation
     const defaultSources = [
       { key: 'bbc-football', name: 'BBC Football', icon: '⚽', defaultAllocation: 300 },
       { key: 'bbc-headlines', name: 'BBC Headlines', icon: '📰', defaultAllocation: 300 },
@@ -83,7 +115,7 @@ class Database {
       { key: 'guardian-headlines', name: 'Guardian Headlines', icon: '📰', defaultAllocation: 300 },
       { key: 'guardian-opinion', name: 'Guardian Opinion', icon: '💭', defaultAllocation: 300 },
       { key: 'cnn', name: 'CNN', icon: '🌍', defaultAllocation: 300 }
-    ];
+    ].map(validateDefaultSource);
 
     for (const sourceData of defaultSources) {
       await this.client.execute({
