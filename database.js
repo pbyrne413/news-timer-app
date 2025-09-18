@@ -47,11 +47,25 @@ class Database {
           key TEXT UNIQUE NOT NULL,
           name TEXT NOT NULL,
           icon TEXT NOT NULL,
+          url TEXT,
           default_allocation INTEGER DEFAULT 300,
           is_active BOOLEAN DEFAULT 1,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
       `);
+
+      // Add URL column to existing table if it doesn't exist
+      try {
+        await this.client.execute(`
+          ALTER TABLE news_sources ADD COLUMN url TEXT
+        `);
+        log.info('Added URL column to news_sources table');
+      } catch (error) {
+        // Column already exists, ignore error
+        if (!error.message.includes('duplicate column name')) {
+          log.warn('Error adding URL column:', error.message);
+        }
+      }
 
     // Create daily_usages table
     await this.client.execute(`
@@ -152,11 +166,11 @@ class Database {
     return result.rows[0] || null;
   }
 
-  async addSource(key, name, icon, allocation) {
+  async addSource(key, name, icon, url, allocation) {
     await this.ensureInitialized();
     const result = await this.client.execute({
-      sql: 'INSERT INTO news_sources (key, name, icon, default_allocation) VALUES (?, ?, ?, ?)',
-      args: [key, name, icon, allocation]
+      sql: 'INSERT INTO news_sources (key, name, icon, url, default_allocation) VALUES (?, ?, ?, ?, ?)',
+      args: [key, name, icon, url, allocation]
     });
     return result.lastInsertRowid;
   }

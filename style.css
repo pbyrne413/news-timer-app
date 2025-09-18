@@ -434,6 +434,19 @@ header p {
     font-size: 1rem;
 }
 
+.progress-url {
+    margin-left: 8px;
+    text-decoration: none;
+    color: #666;
+    font-size: 1.2rem;
+    transition: color 0.2s ease;
+}
+
+.progress-url:hover {
+    color: #007bff;
+    text-decoration: none;
+}
+
 .progress-bar {
     width: 100%;
     height: 8px;

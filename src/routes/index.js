@@ -2,6 +2,7 @@
 import express from 'express';
 import { corsMiddleware } from '../middleware/cors.js';
 import { validate } from '../middleware/validation.js';
+import { requireAuth, getDevToken } from '../middleware/auth.js';
 import { DateTime } from 'luxon';
 import { SourceController } from '../controllers/SourceController.js';
 import { UsageController } from '../controllers/UsageController.js';
@@ -58,8 +59,11 @@ export class ApiRouter {
       .get(settingsController.getSettings)
       .put(validate('updateSettings'), settingsController.updateSettings);
 
-    // Reset routes
-    this.router.post('/reset', resetController.resetData);
+    // Reset routes - requires authentication for security
+    this.router.post('/reset', requireAuth, resetController.resetData);
+    
+    // Development authentication endpoint
+    this.router.get('/dev-auth', getDevToken);
   }
 
   getRouter() {

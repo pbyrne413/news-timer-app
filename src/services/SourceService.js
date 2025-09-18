@@ -28,7 +28,7 @@ export class SourceService extends BaseService {
   // Add new source with business validation
   async addSource(sourceData) {
     return this.executeWithConnection(async () => {
-      const { name, icon = '📰', allocation = config.businessRules.defaultAllocation } = sourceData;
+      const { name, icon = '📰', url, allocation = config.businessRules.defaultAllocation } = sourceData;
       
       const key = this._generateSourceKey(name);
       
@@ -42,13 +42,19 @@ export class SourceService extends BaseService {
       if (allocation < config.businessRules.minAllocation || allocation > config.businessRules.maxAllocation) {
         throw new AppError(`Allocation must be between ${config.businessRules.minAllocation} and ${config.businessRules.maxAllocation} seconds`, 400);
       }
+
+      // Business rule: Validate URL format if provided
+      if (url && !this._isValidUrl(url)) {
+        throw new AppError('Invalid URL format', 400);
+      }
       
-      const sourceId = await this.db.addSource(key, name, icon, allocation);
+      const sourceId = await this.db.addSource(key, name, icon, url, allocation);
       
       return {
         key,
         name,
         icon,
+        url,
         allocated: allocation,
         used: 0,
         sessions: 0,
@@ -86,10 +92,20 @@ export class SourceService extends BaseService {
       key: source.key,
       name: source.name,
       icon: source.icon,
+      url: source.url,
       allocated: source.default_allocation,
       used: usage ? usage.time_used : 0,
       sessions: usage ? usage.sessions : 0,
       overrunTime: usage ? usage.overrun_time : 0
     };
+  }
+
+  _isValidUrl(url) {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
   }
 }

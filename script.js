@@ -7,6 +7,7 @@ class NewsTimer {
         this.dailyTimeUsed = 0;
         this.sessionsCount = 0;
         this.autoStart = false;
+        this.authToken = null; // Store authentication token
         
         // Individual source timers (will be loaded from API)
         this.sourceTimers = {};
@@ -17,13 +18,40 @@ class NewsTimer {
         // Don't auto-request notification permission - let user do it manually
     }
     
+    // Get authentication token for admin operations
+    async getAuthToken() {
+        if (this.authToken) {
+            console.log('Using cached auth token');
+            return this.authToken;
+        }
+        
+        try {
+            console.log('Requesting new auth token from /dev-auth...');
+            const response = await window.apiService.request('/dev-auth');
+            console.log('Auth response:', response);
+            this.authToken = response.token;
+            console.log('Auth token obtained:', this.authToken ? 'Success' : 'Failed');
+            console.log('Token value:', this.authToken);
+            return this.authToken;
+        } catch (error) {
+            console.error('Failed to get auth token:', error);
+            console.error('Error details:', error.message);
+            throw error;
+        }
+    }
+    
     async loadDataFromAPI() {
         try {
+            console.log('loadDataFromAPI - Starting API calls...');
+            
             // Load sources and settings from API
             const [sources, settings] = await Promise.all([
                 window.apiService.getSources(),
                 window.apiService.getSettings()
             ]);
+            
+            console.log('loadDataFromAPI - API calls completed');
+            console.log('loadDataFromAPI - Raw sources data:', sources);
             
             // Update source timers from API data
             this.sourceTimers = {};
@@ -42,6 +70,11 @@ class NewsTimer {
             
             // Calculate daily time used
             this.dailyTimeUsed = sources.reduce((sum, source) => sum + source.used, 0);
+            
+            // Debug logging
+            console.log('loadDataFromAPI - sources:', sources.map(s => ({key: s.key, used: s.used})));
+            console.log('loadDataFromAPI - dailyTimeUsed:', this.dailyTimeUsed);
+            console.log('loadDataFromAPI - sourceTimers:', this.sourceTimers);
             
             // Update UI
             this.initializeProgressElements(); // Initialize progress elements after data is loaded
@@ -152,6 +185,16 @@ class NewsTimer {
         this.equation1Display = document.getElementById('equation1');
         this.equation2Display = document.getElementById('equation2');
         
+        // Add source modal elements
+        this.addSourceModal = document.getElementById('add-source-modal');
+        this.closeAddSourceModalBtn = document.getElementById('close-add-source-modal');
+        this.addSourceSubmitBtn = document.getElementById('add-source-submit');
+        this.cancelAddSourceBtn = document.getElementById('cancel-add-source');
+        this.newSourceNameInput = document.getElementById('new-source-name');
+        this.newSourceIconInput = document.getElementById('new-source-icon');
+        this.newSourceUrlInput = document.getElementById('new-source-url');
+        this.newSourceAllocationInput = document.getElementById('new-source-allocation');
+        
         // Progress elements (will be populated dynamically)
         this.sourceProgressElements = {};
         this.sourceUsedElements = {};
@@ -211,6 +254,11 @@ class NewsTimer {
         this.closeMathModalBtn.addEventListener('click', () => this.closeMathChallenge());
         this.checkMathAnswerBtn.addEventListener('click', () => this.checkMathAnswer());
         this.cancelMathChallengeBtn.addEventListener('click', () => this.closeMathChallenge());
+        
+        // Add source modal
+        this.closeAddSourceModalBtn.addEventListener('click', () => this.closeAddSourceModal());
+        this.addSourceSubmitBtn.addEventListener('click', () => this.submitAddSource());
+        this.cancelAddSourceBtn.addEventListener('click', () => this.closeAddSourceModal());
         
         // Progress item clicks and source allocation changes will be set up in initializeProgressElements()
         
@@ -346,12 +394,46 @@ class NewsTimer {
         
         // Reset on server
         try {
-            await window.apiService.resetData();
+            console.log('Resetting data on server...');
+            console.log('API base URL:', window.apiService.baseUrl);
+            
+            // Get authentication token
+            const token = await this.getAuthToken();
+            console.log('Using auth token for reset');
+            
+            // Add timeout to prevent hanging
+            const resetPromise = window.apiService.request('/reset', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Reset request timed out')), 10000)
+            );
+            
+            await Promise.race([resetPromise, timeoutPromise]);
+            console.log('Server reset successful');
+            
+            // Reload data from API to ensure UI is in sync
+            if (this.isOnlineMode) {
+                console.log('Reloading data from API...');
+                await this.loadDataFromAPI();
+                console.log('Data reloaded from API');
+                
+                // Force update the display after reloading data
+                this.updateDisplay();
+            } else {
+                // For offline mode, just update the display with the reset values
+                this.updateDisplay();
+            }
         } catch (error) {
             console.error('Failed to reset data on server:', error);
+            console.error('Error details:', error.message);
+            // Even if server reset fails, update the display with local reset
+            this.updateDisplay();
         }
         
-        this.updateDisplay();
         this.showNotification('All timers reset.', 'success');
     }
     
@@ -402,6 +484,9 @@ class NewsTimer {
     }
     
     updateDisplay() {
+        // Debug logging
+        console.log('updateDisplay - totalTimeLimit:', this.totalTimeLimit, 'dailyTimeUsed:', this.dailyTimeUsed);
+        
         // Update total time display
         const totalMinutes = Math.floor(this.totalTimeLimit / 60);
         const totalSeconds = this.totalTimeLimit % 60;
@@ -724,7 +809,7 @@ class NewsTimer {
         if (xCorrect && yCorrect) {
             this.showNotification('Correct! You may proceed to add a new source.', 'success');
             this.closeMathChallenge();
-            this.addNewSource();
+            this.openAddSourceModal();
         } else {
             this.showNotification(`Incorrect. The correct answers are x = ${this.correctX.toFixed(1)}, y = ${this.correctY.toFixed(1)}. Try again.`, 'error');
             this.xValueInput.value = '';
@@ -732,15 +817,44 @@ class NewsTimer {
         }
     }
     
-    async addNewSource() {
-        const sourceName = prompt('Enter the name for your new news source:');
-        if (!sourceName || sourceName.trim() === '') {
+    openAddSourceModal() {
+        // Reset form
+        this.newSourceNameInput.value = '';
+        this.newSourceIconInput.value = '📰';
+        this.newSourceUrlInput.value = '';
+        this.newSourceAllocationInput.value = '5';
+        
+        // Show modal
+        this.addSourceModal.classList.remove('hidden');
+    }
+    
+    closeAddSourceModal() {
+        this.addSourceModal.classList.add('hidden');
+    }
+    
+    async submitAddSource() {
+        const name = this.newSourceNameInput.value.trim();
+        const icon = this.newSourceIconInput.value.trim() || '📰';
+        const url = this.newSourceUrlInput.value.trim();
+        const allocation = parseInt(this.newSourceAllocationInput.value) * 60; // Convert to seconds
+        
+        if (!name) {
             this.showNotification('Source name cannot be empty.', 'error');
             return;
         }
         
+        if (url && !this.isValidUrl(url)) {
+            this.showNotification('Please enter a valid URL.', 'error');
+            return;
+        }
+        
         try {
-            const newSource = await window.apiService.addSource(sourceName, '📰', 5 * 60);
+            const newSource = await window.apiService.addSource({
+                name,
+                icon,
+                url: url || undefined,
+                allocation
+            });
             
             // Add to local sourceTimers
             this.sourceTimers[newSource.key] = {
@@ -751,19 +865,29 @@ class NewsTimer {
             };
             
             // Add to UI
-            this.addSourceToUI(newSource.key, newSource.name);
+            this.addSourceToUI(newSource.key, newSource.name, newSource.url);
             
             // Redistribute time evenly
             await this.distributeTimeEvenly();
             
-            this.showNotification(`New source "${sourceName}" added! Time has been redistributed evenly.`, 'success');
+            this.closeAddSourceModal();
+            this.showNotification(`New source "${name}" added! Time has been redistributed evenly.`, 'success');
         } catch (error) {
             console.error('Failed to add new source:', error);
             this.showNotification('Failed to add new source. Please try again.', 'error');
         }
     }
     
-    addSourceToUI(sourceKey, sourceName) {
+    isValidUrl(string) {
+        try {
+            new URL(string);
+            return true;
+        } catch (_) {
+            return false;
+        }
+    }
+    
+    addSourceToUI(sourceKey, sourceName, sourceUrl = null) {
         // Sanitize inputs to prevent XSS
         const sanitizedSourceKey = this.sanitizeHtml(sourceKey);
         const sanitizedSourceName = this.sanitizeHtml(sourceName);
@@ -789,6 +913,18 @@ class NewsTimer {
         
         progressInfo.appendChild(progressIcon);
         progressInfo.appendChild(progressLabel);
+        
+        // Add URL if provided
+        if (sourceUrl) {
+            const progressUrl = document.createElement('a');
+            progressUrl.className = 'progress-url';
+            progressUrl.href = sourceUrl;
+            progressUrl.target = '_blank';
+            progressUrl.rel = 'noopener noreferrer';
+            progressUrl.textContent = '🔗';
+            progressUrl.title = sourceUrl;
+            progressInfo.appendChild(progressUrl);
+        }
         
         const progressBar = document.createElement('div');
         progressBar.className = 'progress-bar';
@@ -898,9 +1034,14 @@ class NewsTimer {
     sanitizeHtml(str) {
         if (typeof str !== 'string') return str;
         
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
+        // Use a more secure approach that doesn't rely on innerHTML
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;')
+            .replace(/\//g, '&#x2F;');
     }
     
     updateConnectionStatus(isOnline) {

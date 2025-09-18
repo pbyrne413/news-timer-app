@@ -65,6 +65,8 @@
                     <div class="progress-info">
                         <span class="progress-icon">⚽</span>
                         <span class="progress-label">BBC Football</span>
+                        <a class="progress-url" href="https://www.bbc.com/sport/football" target="_blank"
+                            rel="noopener noreferrer" title="https://www.bbc.com/sport/football">🔗</a>
                     </div>
                     <div class="progress-bar">
                         <div class="progress-fill" id="bbc-football-progress"></div>
@@ -78,6 +80,8 @@
                     <div class="progress-info">
                         <span class="progress-icon">📰</span>
                         <span class="progress-label">BBC Headlines</span>
+                        <a class="progress-url" href="https://www.bbc.com/news" target="_blank"
+                            rel="noopener noreferrer" title="https://www.bbc.com/news">🔗</a>
                     </div>
                     <div class="progress-bar">
                         <div class="progress-fill" id="bbc-headlines-progress"></div>
@@ -91,6 +95,8 @@
                     <div class="progress-info">
                         <span class="progress-icon">🇮🇪</span>
                         <span class="progress-label">RTE Headlines</span>
+                        <a class="progress-url" href="https://www.rte.ie/news/" target="_blank"
+                            rel="noopener noreferrer" title="https://www.rte.ie/news/">🔗</a>
                     </div>
                     <div class="progress-bar">
                         <div class="progress-fill" id="rte-headlines-progress"></div>
@@ -104,6 +110,8 @@
                     <div class="progress-info">
                         <span class="progress-icon">🛡️</span>
                         <span class="progress-label">Guardian Headlines</span>
+                        <a class="progress-url" href="https://www.theguardian.com/uk" target="_blank"
+                            rel="noopener noreferrer" title="https://www.theguardian.com/uk">🔗</a>
                     </div>
                     <div class="progress-bar">
                         <div class="progress-fill" id="guardian-headlines-progress"></div>
@@ -117,6 +125,8 @@
                     <div class="progress-info">
                         <span class="progress-icon">💭</span>
                         <span class="progress-label">Guardian Opinion</span>
+                        <a class="progress-url" href="https://www.theguardian.com/commentisfree" target="_blank"
+                            rel="noopener noreferrer" title="https://www.theguardian.com/commentisfree">🔗</a>
                     </div>
                     <div class="progress-bar">
                         <div class="progress-fill" id="guardian-opinion-progress"></div>
@@ -130,6 +140,8 @@
                     <div class="progress-info">
                         <span class="progress-icon">🌍</span>
                         <span class="progress-label">CNN</span>
+                        <a class="progress-url" href="https://www.cnn.com/" target="_blank" rel="noopener noreferrer"
+                            title="https://www.cnn.com/">🔗</a>
                     </div>
                     <div class="progress-bar">
                         <div class="progress-fill" id="cnn-progress"></div>
@@ -290,6 +302,38 @@
             <div class="modal-footer">
                 <button id="check-math-answer" class="btn btn-primary">Check Answer</button>
                 <button id="cancel-math-challenge" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Source Modal -->
+    <div id="add-source-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New News Source</h3>
+                <button id="close-add-source-modal" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="new-source-name">Source Name:</label>
+                    <input type="text" id="new-source-name" placeholder="e.g., Reuters News" maxlength="100" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-source-icon">Icon (optional):</label>
+                    <input type="text" id="new-source-icon" placeholder="📰" maxlength="10">
+                </div>
+                <div class="form-group">
+                    <label for="new-source-url">URL (optional):</label>
+                    <input type="url" id="new-source-url" placeholder="https://example.com" maxlength="500">
+                </div>
+                <div class="form-group">
+                    <label for="new-source-allocation">Time Allocation (minutes):</label>
+                    <input type="number" id="new-source-allocation" value="5" min="1" max="60">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="add-source-submit" class="btn btn-primary">Add Source</button>
+                <button id="cancel-add-source" class="btn btn-secondary">Cancel</button>
             </div>
         </div>
     </div>

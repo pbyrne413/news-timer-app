@@ -76,6 +76,7 @@ export const schemas = {
   addSource: {
     name: { type: 'string', required: true, minLength: 1, maxLength: 100 },
     icon: { type: 'string', required: false, maxLength: 10 },
+    url: { type: 'string', required: false, maxLength: 500 },
     allocation: { 
       type: 'number', 
       min: config.businessRules.minAllocation, 

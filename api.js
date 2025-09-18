@@ -84,14 +84,10 @@ class ApiService {
   }
 
   // Add new source
-  async addSource(name, icon, allocation) {
+  async addSource(sourceData) {
     return this.request('/sources', {
       method: 'POST',
-      body: {
-        name,
-        icon,
-        allocation,
-      },
+      body: sourceData,
     });
   }
 
