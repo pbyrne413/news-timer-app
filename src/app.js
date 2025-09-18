@@ -12,6 +12,10 @@ export class Application {
     this.app = express();
     this.container = container;
     this._initialized = false;
+    
+    // Configure Express settings
+    this.app.set('strict routing', false); // Don't redirect /path to /path/
+    this.app.set('case sensitive routing', false); // Case insensitive routing
   }
 
   async initialize() {
