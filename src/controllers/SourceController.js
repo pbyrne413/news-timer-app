@@ -37,4 +37,12 @@ export class SourceController extends BaseController {
     const result = await this.sourceService.updateSourceAllocation(sourceKey, allocation);
     this.sendSuccess(res, result);
   });
+
+  // DELETE /api/sources/:sourceKey - Delete source
+  deleteSource = this.createHandler(async (req, res) => {
+    const { sourceKey } = req.params;
+    
+    const result = await this.sourceService.deleteSource(sourceKey);
+    this.sendSuccess(res, result);
+  });
 }

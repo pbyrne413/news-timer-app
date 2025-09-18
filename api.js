@@ -91,6 +91,13 @@ class ApiService {
     });
   }
 
+  // Delete source
+  async deleteSource(sourceKey) {
+    return this.request(`/sources/${sourceKey}`, {
+      method: 'DELETE',
+    });
+  }
+
   // Health check
   async healthCheck() {
     return this.request('/health');

@@ -687,6 +687,49 @@ class NewsTimer {
             }
         }
     }
+
+    async deleteSource(sourceKey) {
+        // Confirm deletion
+        const sourceName = this.sourceTimers[sourceKey] ? 
+            document.querySelector(`.progress-item[data-source="${sourceKey}"] .progress-label`)?.textContent || sourceKey : 
+            sourceKey;
+        
+        if (!confirm(`Are you sure you want to delete "${sourceName}"? This action cannot be undone.`)) {
+            return;
+        }
+        
+        try {
+            // Delete from server
+            await window.apiService.deleteSource(sourceKey);
+            
+            // Remove from local state
+            delete this.sourceTimers[sourceKey];
+            
+            // Remove from UI
+            const progressItem = document.querySelector(`.progress-item[data-source="${sourceKey}"]`);
+            if (progressItem) {
+                progressItem.remove();
+            }
+            
+            // If this was the current source, clear it
+            if (this.currentSource === sourceKey) {
+                this.currentSource = null;
+                this.pause();
+            }
+            
+            // Update display
+            this.updateDisplay();
+            
+            // Reload settings modal to update the allocation grid
+            this.loadSettingsIntoModal();
+            
+            this.showNotification(`Source "${sourceName}" deleted successfully.`, 'success');
+            
+        } catch (error) {
+            console.error('Failed to delete source:', error);
+            this.showNotification('Failed to delete source. Please try again.', 'error');
+        }
+    }
     
     openSettingsModal() {
         this.loadSettingsIntoModal();
@@ -701,10 +744,46 @@ class NewsTimer {
         this.totalTimeLimitInput.value = Math.floor(this.totalTimeLimit / 60);
         this.autoStartCheckbox.checked = this.autoStart;
         
-        // Update source allocation inputs
+        // Clear existing allocation items
+        const allocationGrid = document.querySelector('.allocation-grid');
+        allocationGrid.innerHTML = '';
+        
+        // Create allocation items for all sources
         Object.keys(this.sourceTimers).forEach(source => {
-            if (this.sourceAllocationElements[source]) {
-                this.sourceAllocationElements[source].value = Math.floor(this.sourceTimers[source].allocated / 60);
+            const sourceData = this.sourceTimers[source];
+            const allocationItem = document.createElement('div');
+            allocationItem.className = 'allocation-item';
+            allocationItem.setAttribute('data-source', source);
+            
+            // Get source info (name, icon) - we need to find this from the DOM or API
+            const progressItem = document.querySelector(`.progress-item[data-source="${source}"]`);
+            const sourceName = progressItem ? progressItem.querySelector('.progress-label').textContent : source;
+            const sourceIcon = progressItem ? progressItem.querySelector('.progress-icon').textContent : '📰';
+            
+            // Check if this is a default source (no delete button)
+            const defaultSources = ['bbc-football', 'bbc-headlines', 'rte-headlines', 'guardian-headlines', 'guardian-opinion', 'cnn'];
+            const isDefaultSource = defaultSources.includes(source);
+            
+            allocationItem.innerHTML = `
+                <label for="${source}-alloc">${sourceIcon} ${sourceName}:</label>
+                <input type="number" id="${source}-alloc" value="${Math.floor(sourceData.allocated / 60)}" min="0" max="30" data-source="${source}">
+                <span>minutes</span>
+                ${!isDefaultSource ? `<button class="btn-delete-source" data-source="${source}" title="Delete source">🗑️</button>` : ''}
+            `;
+            
+            allocationGrid.appendChild(allocationItem);
+            
+            // Set up event listeners
+            const input = allocationItem.querySelector(`#${source}-alloc`);
+            const deleteBtn = allocationItem.querySelector('.btn-delete-source');
+            
+            if (input) {
+                this.sourceAllocationElements[source] = input;
+                input.addEventListener('change', () => this.updateSourceAllocationFromModal(source));
+            }
+            
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', () => this.deleteSource(source));
             }
         });
     }

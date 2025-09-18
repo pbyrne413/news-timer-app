@@ -82,6 +82,26 @@ export class SourceService extends BaseService {
     });
   }
 
+  // Delete source
+  async deleteSource(sourceKey) {
+    return this.executeWithConnection(async () => {
+      // Business rule: Ensure source exists
+      const source = await this.db.getSourceByKey(sourceKey);
+      if (!source) {
+        throw new AppError('Source not found', 404);
+      }
+
+      // Business rule: Prevent deletion of default sources
+      const defaultSources = ['bbc-football', 'bbc-headlines', 'rte-headlines', 'guardian-headlines', 'guardian-opinion', 'cnn'];
+      if (defaultSources.includes(sourceKey)) {
+        throw new AppError('Cannot delete default sources', 400);
+      }
+
+      await this.db.deleteSource(source.id);
+      return { success: true };
+    });
+  }
+
   // Private helper methods following Single Responsibility Principle
   _generateSourceKey(name) {
     return name.toLowerCase().replace(/[^a-z0-9]/g, '-');

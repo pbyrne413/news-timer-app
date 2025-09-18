@@ -183,6 +183,20 @@ class Database {
     });
   }
 
+  async deleteSource(sourceId) {
+    await this.ensureInitialized();
+    // Delete associated daily usage data first (cascade delete)
+    await this.client.execute({
+      sql: 'DELETE FROM daily_usages WHERE source_id = ?',
+      args: [sourceId]
+    });
+    // Then delete the source
+    return this.client.execute({
+      sql: 'DELETE FROM news_sources WHERE id = ?',
+      args: [sourceId]
+    });
+  }
+
   // Daily Usage methods
   async getDailyUsage(sourceId, date) {
     await this.ensureInitialized();

@@ -637,6 +637,23 @@ header p {
     min-width: 50px;
 }
 
+.btn-delete-source {
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    margin-left: 10px;
+}
+
+.btn-delete-source:hover {
+    background: #c82333;
+    transform: scale(1.05);
+}
+
 .modal-footer {
     display: flex;
     justify-content: flex-end;
