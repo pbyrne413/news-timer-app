@@ -764,38 +764,89 @@ class NewsTimer {
     }
     
     addSourceToUI(sourceKey, sourceName) {
+        // Sanitize inputs to prevent XSS
+        const sanitizedSourceKey = this.sanitizeHtml(sourceKey);
+        const sanitizedSourceName = this.sanitizeHtml(sourceName);
+        
         // Get the progress grid container
         const progressGrid = document.querySelector('.progress-grid');
         
-        // Create the new progress item HTML
-        const progressItemHTML = `
-            <div class="progress-item" data-source="${sourceKey}">
-                <div class="progress-info">
-                    <span class="progress-icon">📰</span>
-                    <span class="progress-label">${sourceName}</span>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="${sourceKey}-progress"></div>
-                </div>
-                <div class="progress-time">
-                    <span id="${sourceKey}-used">0:00</span> / <span id="${sourceKey}-total">5:00</span>
-                </div>
-            </div>
-        `;
+        // Create the new progress item using DOM methods instead of innerHTML
+        const progressItem = document.createElement('div');
+        progressItem.className = 'progress-item';
+        progressItem.setAttribute('data-source', sanitizedSourceKey);
+        
+        const progressInfo = document.createElement('div');
+        progressInfo.className = 'progress-info';
+        
+        const progressIcon = document.createElement('span');
+        progressIcon.className = 'progress-icon';
+        progressIcon.textContent = '📰';
+        
+        const progressLabel = document.createElement('span');
+        progressLabel.className = 'progress-label';
+        progressLabel.textContent = sanitizedSourceName;
+        
+        progressInfo.appendChild(progressIcon);
+        progressInfo.appendChild(progressLabel);
+        
+        const progressBar = document.createElement('div');
+        progressBar.className = 'progress-bar';
+        
+        const progressFill = document.createElement('div');
+        progressFill.className = 'progress-fill';
+        progressFill.id = `${sanitizedSourceKey}-progress`;
+        
+        progressBar.appendChild(progressFill);
+        
+        const progressTime = document.createElement('div');
+        progressTime.className = 'progress-time';
+        
+        const usedSpan = document.createElement('span');
+        usedSpan.id = `${sanitizedSourceKey}-used`;
+        usedSpan.textContent = '0:00';
+        
+        const totalSpan = document.createElement('span');
+        totalSpan.id = `${sanitizedSourceKey}-total`;
+        totalSpan.textContent = '5:00';
+        
+        progressTime.appendChild(usedSpan);
+        progressTime.appendChild(document.createTextNode(' / '));
+        progressTime.appendChild(totalSpan);
+        
+        progressItem.appendChild(progressInfo);
+        progressItem.appendChild(progressBar);
+        progressItem.appendChild(progressTime);
         
         // Add the new progress item to the grid
-        progressGrid.insertAdjacentHTML('beforeend', progressItemHTML);
+        progressGrid.appendChild(progressItem);
         
         // Add the new source to the settings modal allocation grid
         const allocationGrid = document.querySelector('.allocation-grid');
-        const allocationItemHTML = `
-            <div class="allocation-item">
-                <label for="${sourceKey}-alloc">📰 ${sourceName}:</label>
-                <input type="number" id="${sourceKey}-alloc" value="5" min="0" max="30" data-source="${sourceKey}">
-                <span>minutes</span>
-            </div>
-        `;
-        allocationGrid.insertAdjacentHTML('beforeend', allocationItemHTML);
+        
+        const allocationItem = document.createElement('div');
+        allocationItem.className = 'allocation-item';
+        
+        const label = document.createElement('label');
+        label.setAttribute('for', `${sanitizedSourceKey}-alloc`);
+        label.textContent = `📰 ${sanitizedSourceName}:`;
+        
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.id = `${sanitizedSourceKey}-alloc`;
+        input.value = '5';
+        input.min = '0';
+        input.max = '30';
+        input.setAttribute('data-source', sanitizedSourceKey);
+        
+        const span = document.createElement('span');
+        span.textContent = 'minutes';
+        
+        allocationItem.appendChild(label);
+        allocationItem.appendChild(input);
+        allocationItem.appendChild(span);
+        
+        allocationGrid.appendChild(allocationItem);
         
         // Re-initialize elements to include the new source
         this.initializeNewSourceElements(sourceKey);
@@ -841,6 +892,15 @@ class NewsTimer {
         };
         
         return sourceNames[source] || source;
+    }
+    
+    // Sanitize HTML to prevent XSS attacks
+    sanitizeHtml(str) {
+        if (typeof str !== 'string') return str;
+        
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
     }
     
     updateConnectionStatus(isOnline) {

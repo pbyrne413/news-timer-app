@@ -1,7 +1,13 @@
 import { config } from '../config/index.js';
 import { createLogger } from '../utils/Logger.js';
+import crypto from 'crypto';
 
 const log = createLogger('CORS');
+
+// Generate a cryptographically secure nonce for CSP
+const generateNonce = () => {
+  return crypto.randomBytes(16).toString('base64');
+};
 
 // CORS middleware with enhanced security
 export const corsMiddleware = (req, res, next) => {
@@ -40,23 +46,29 @@ export const corsMiddleware = (req, res, next) => {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
   
-  // Additional security headers
+  // Enhanced security headers
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=(), speaker=(), vibrate=(), fullscreen=(self), sync-xhr=()');
+  res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
   
-  // Content Security Policy
+  // Content Security Policy - Enhanced security without unsafe-inline
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' https://vercel.live",
-    "style-src 'self' 'unsafe-inline'",
+    "script-src 'self' 'nonce-" + generateNonce() + "' https://vercel.live",
+    "style-src 'self' 'nonce-" + generateNonce() + "'",
     "img-src 'self' data: https:",
     "connect-src 'self' https://api.vercel.com",
     "font-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",
-    "form-action 'self'"
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "upgrade-insecure-requests"
   ].join('; ');
   
   res.setHeader('Content-Security-Policy', csp);

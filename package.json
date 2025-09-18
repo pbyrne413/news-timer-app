@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "nodemon": "^3.0.1",
-    "vercel": "^48.0.2"
+    "vercel": "^28.18.5"
   },
   "engines": {
     "node": ">=22.0.0"

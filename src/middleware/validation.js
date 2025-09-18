@@ -2,7 +2,7 @@ import { AppError } from './errorHandler.js';
 import { config } from '../config/index.js';
 import { DateTime } from 'luxon';
 
-// Input sanitization utilities
+// Enhanced input sanitization utilities
 const sanitizeString = (str) => {
   if (typeof str !== 'string') return str;
   
@@ -10,6 +10,18 @@ const sanitizeString = (str) => {
     .replace(/[<>]/g, '') // Remove potential HTML tags
     .replace(/javascript:/gi, '') // Remove javascript: protocols
     .replace(/on\w+=/gi, '') // Remove event handlers
+    .replace(/data:/gi, '') // Remove data: protocols
+    .replace(/vbscript:/gi, '') // Remove vbscript: protocols
+    .replace(/expression\s*\(/gi, '') // Remove CSS expressions
+    .replace(/url\s*\(/gi, '') // Remove CSS url() functions
+    .replace(/@import/gi, '') // Remove CSS @import
+    .replace(/eval\s*\(/gi, '') // Remove eval() calls
+    .replace(/setTimeout\s*\(/gi, '') // Remove setTimeout calls
+    .replace(/setInterval\s*\(/gi, '') // Remove setInterval calls
+    .replace(/document\./gi, '') // Remove document object access
+    .replace(/window\./gi, '') // Remove window object access
+    .replace(/\.innerHTML/gi, '') // Remove innerHTML access
+    .replace(/\.outerHTML/gi, '') // Remove outerHTML access
     .trim();
 };
 
@@ -95,7 +107,7 @@ const validateField = (value, rules, fieldName) => {
       throw new AppError(`${fieldName} must be a boolean`, 400);
     }
 
-    // String validation with security checks
+    // String validation with enhanced security checks
     if (rules.type === 'string') {
       // Check for potential XSS patterns
       const dangerousPatterns = [
@@ -104,7 +116,31 @@ const validateField = (value, rules, fieldName) => {
         /on\w+\s*=/i,
         /<iframe/i,
         /<object/i,
-        /<embed/i
+        /<embed/i,
+        /<form/i,
+        /<input/i,
+        /<textarea/i,
+        /<select/i,
+        /<button/i,
+        /<link/i,
+        /<meta/i,
+        /<style/i,
+        /<link/i,
+        /data:/i,
+        /vbscript:/i,
+        /expression\s*\(/i,
+        /url\s*\(/i,
+        /@import/i,
+        /eval\s*\(/i,
+        /setTimeout\s*\(/i,
+        /setInterval\s*\(/i,
+        /document\./i,
+        /window\./i,
+        /\.innerHTML/i,
+        /\.outerHTML/i,
+        /\.insertAdjacentHTML/i,
+        /\.write/i,
+        /\.writeln/i
       ];
       
       if (dangerousPatterns.some(pattern => pattern.test(value))) {

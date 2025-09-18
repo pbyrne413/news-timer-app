@@ -1,24 +1,38 @@
 import { AppError } from './errorHandler.js';
 import { config } from '../config/index.js';
 import { DateTime } from 'luxon';
+import crypto from 'crypto';
 
-// Simple authentication middleware for sensitive operations
-// In a real application, you'd use proper JWT or session-based auth
+// Enhanced authentication middleware for sensitive operations
+// Uses cryptographically secure random token generation
 
-const ADMIN_TOKENS = new Set();
+const ADMIN_TOKENS = new Map(); // Store tokens with expiration times
 const FAILED_ATTEMPTS = new Map();
 
-// Generate a simple admin token (in production, use proper JWT)
+// Generate a cryptographically secure admin token
 export const generateAdminToken = () => {
-  const token = Math.random().toString(36).substring(2) + DateTime.now().toMillis().toString(36);
-  ADMIN_TOKENS.add(token);
+  // Use crypto.randomBytes for secure random generation
+  const randomBytes = crypto.randomBytes(32);
+  const timestamp = DateTime.now().toMillis();
+  const token = randomBytes.toString('hex') + timestamp.toString(16);
   
-  // Token expires in 1 hour
-  setTimeout(() => {
-    ADMIN_TOKENS.delete(token);
-  }, 3600000);
+  const expirationTime = DateTime.now().plus({ hours: 1 }).toMillis();
+  ADMIN_TOKENS.set(token, expirationTime);
+  
+  // Clean up expired tokens
+  cleanupExpiredTokens();
   
   return token;
+};
+
+// Clean up expired tokens
+const cleanupExpiredTokens = () => {
+  const now = DateTime.now().toMillis();
+  for (const [token, expiration] of ADMIN_TOKENS.entries()) {
+    if (now > expiration) {
+      ADMIN_TOKENS.delete(token);
+    }
+  }
 };
 
 // Rate limiting for failed authentication attempts
@@ -72,14 +86,21 @@ export const requireAuth = (req, res, next) => {
   
   const token = authHeader.substring(7);
   
-  if (!ADMIN_TOKENS.has(token)) {
+  // Check if token exists and is not expired
+  const expirationTime = ADMIN_TOKENS.get(token);
+  if (!expirationTime || DateTime.now().toMillis() > expirationTime) {
+    // Clean up expired token
+    if (expirationTime) {
+      ADMIN_TOKENS.delete(token);
+    }
+    
     // Record failed attempt
     const attempts = FAILED_ATTEMPTS.get(clientId) || { count: 0, lastAttempt: 0 };
     attempts.count++;
     attempts.lastAttempt = Date.now();
     FAILED_ATTEMPTS.set(clientId, attempts);
     
-    throw new AppError('Invalid authentication token', 401, 'AUTH_INVALID_TOKEN');
+    throw new AppError('Invalid or expired authentication token', 401, 'AUTH_INVALID_TOKEN');
   }
   
   // Reset failed attempts on successful auth
@@ -94,8 +115,15 @@ export const optionalAuth = (req, res, next) => {
   
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.substring(7);
-    req.isAuthenticated = ADMIN_TOKENS.has(token);
+    const expirationTime = ADMIN_TOKENS.get(token);
+    req.isAuthenticated = expirationTime && DateTime.now().toMillis() <= expirationTime;
     req.authToken = token;
+    
+    // Clean up expired token
+    if (expirationTime && DateTime.now().toMillis() > expirationTime) {
+      ADMIN_TOKENS.delete(token);
+      req.isAuthenticated = false;
+    }
   } else {
     req.isAuthenticated = false;
   }
