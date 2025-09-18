@@ -1,5 +1,8 @@
 import { createClient } from '@libsql/client';
 import { config } from './src/config/index.js';
+import { createLogger } from './src/utils/Logger.js';
+
+const log = createLogger('Database');
 
 class Database {
   constructor() {
@@ -78,9 +81,9 @@ class Database {
 
       // Initialize default data
       await this.initializeDefaultData();
-      console.log('Database tables initialized successfully');
+      log.info('Database tables initialized successfully');
     } catch (error) {
-      console.error('Database initialization error:', error);
+      log.error('Database initialization error', { error: error.message, stack: error.stack });
       throw error;
     }
   }
@@ -130,7 +133,7 @@ class Database {
       args: [1800, false]
     });
 
-    console.log('Default data initialized');
+    log.info('Default data initialized');
   }
 
   // News Sources methods

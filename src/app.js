@@ -3,6 +3,9 @@ import express from 'express';
 import { container } from './container/ServiceContainer.js';
 import { ApiRouter } from './routes/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { createLogger } from './utils/Logger.js';
+
+const log = createLogger('Application');
 
 export class Application {
   constructor() {
@@ -64,15 +67,14 @@ export class Application {
         if (err) {
           reject(err);
         } else {
-          console.log(`Server running on port ${port}`);
-          console.log(`Visit http://localhost:${port} to use the app`);
+          log.info('Server started successfully', { port, url: `http://localhost:${port}` });
           resolve(server);
         }
       });
 
       // Graceful shutdown handling
       process.on('SIGTERM', async () => {
-        console.log('SIGTERM received, shutting down gracefully');
+        log.info('SIGTERM received, shutting down gracefully');
         server.close(async () => {
           await this.container.shutdown();
           process.exit(0);
@@ -80,7 +82,7 @@ export class Application {
       });
 
       process.on('SIGINT', async () => {
-        console.log('SIGINT received, shutting down gracefully');
+        log.info('SIGINT received, shutting down gracefully');
         server.close(async () => {
           await this.container.shutdown();
           process.exit(0);

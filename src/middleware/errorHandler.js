@@ -11,6 +11,9 @@ export class AppError extends Error {
 
 import { config } from '../config/index.js';
 import { DateTime } from 'luxon';
+import { createLogger } from '../utils/Logger.js';
+
+const log = createLogger('ErrorHandler');
 
 // Secure error logging without exposing sensitive info
 const logError = (error, req) => {
@@ -24,7 +27,7 @@ const logError = (error, req) => {
     ...(config.server.env === 'development' && { stack: error.stack })
   };
   
-  console.error('Error occurred:', logData);
+  log.error('Error occurred', logData);
 };
 
 export const errorHandler = (error, req, res, next) => {

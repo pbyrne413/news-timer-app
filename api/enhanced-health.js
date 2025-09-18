@@ -1,6 +1,9 @@
 // Enhanced health check with performance metrics
 import { corsMiddleware } from '../src/middleware/cors.js';
 import { DateTime } from 'luxon';
+import { createLogger } from '../src/utils/Logger.js';
+
+const log = createLogger('HealthCheck');
 
 // Format duration in milliseconds to human readable
 const formatDuration = (milliseconds) => {
@@ -64,7 +67,7 @@ export default async function handler(req, res) {
 
     res.status(200).json(healthData);
   } catch (error) {
-    console.error('Health check error:', error);
+    log.error('Health check error', { error: error.message, stack: error.stack });
     
     res.status(500).json({
       status: 'ERROR',

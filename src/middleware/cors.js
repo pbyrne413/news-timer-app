@@ -1,4 +1,7 @@
 import { config } from '../config/index.js';
+import { createLogger } from '../utils/Logger.js';
+
+const log = createLogger('CORS');
 
 // CORS middleware with enhanced security
 export const corsMiddleware = (req, res, next) => {
@@ -8,7 +11,10 @@ export const corsMiddleware = (req, res, next) => {
   // Only allow specific origins in production
   if (config.server.env === 'production') {
     if (allowedOrigins.includes('*')) {
-      console.warn('SECURITY WARNING: Wildcard CORS origin detected in production');
+      log.security('Wildcard CORS origin detected in production', { 
+        origin: origin,
+        environment: config.server.env 
+      });
     }
     
     if (origin && (allowedOrigins.includes(origin) || allowedOrigins.includes('*'))) {

@@ -1,5 +1,8 @@
 import { BaseService } from './BaseService.js';
 import { AppError } from '../middleware/errorHandler.js';
+import { createLogger } from '../utils/Logger.js';
+
+const log = createLogger('UsageService');
 
 export class UsageService extends BaseService {
   constructor(database) {
@@ -45,7 +48,7 @@ export class UsageService extends BaseService {
       const today = this.getCurrentDate();
       
       // Business rule: Log reset operation for audit
-      console.log(`Resetting daily data for ${today}`);
+      log.info('Resetting daily data', { date: today });
       
       await this.db.clearDailyData(today);
       return { success: true };

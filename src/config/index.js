@@ -1,4 +1,8 @@
 // Configuration management with enhanced security
+import { createLogger } from '../utils/Logger.js';
+
+const log = createLogger('Config');
+
 const getEnvVar = (name, defaultValue = null, required = false) => {
   const value = process.env[name];
   
@@ -113,7 +117,7 @@ export const validateConfig = () => {
 
   // Log warnings
   if (warnings.length > 0) {
-    console.warn('Configuration warnings:', warnings);
+    log.warn('Configuration warnings', { warnings });
   }
 
   if (errors.length > 0) {
