@@ -4,7 +4,31 @@ This document outlines the comprehensive security measures implemented in the Ne
 
 ## 🚨 Critical Security Issues Fixed
 
-### 1. CORS Misconfiguration ⚠️ **HIGH PRIORITY**
+### 1. Dependency Vulnerabilities ⚠️ **CRITICAL**
+
+**Issue**: Multiple high and critical severity vulnerabilities in dependencies:
+- esbuild <=0.24.2 (moderate)
+- path-to-regexp 4.0.0 - 6.2.2 (high)
+- undici <=5.28.5 (moderate)
+- vm2 (critical)
+
+**Fix Applied**:
+- Updated dependencies to latest secure versions
+- Updated Vercel CLI to latest version
+- Applied security patches where available
+- Regular dependency auditing with `npm audit`
+
+### 2. Weak Authentication Token Generation ⚠️ **CRITICAL**
+
+**Issue**: Using `Math.random()` for token generation, which is not cryptographically secure.
+
+**Fix Applied**:
+- Replaced with `crypto.randomBytes()` for secure random generation
+- Implemented proper token expiration handling
+- Added token cleanup mechanisms
+- Enhanced session management with secure cookies
+
+### 3. CORS Misconfiguration ⚠️ **HIGH PRIORITY**
 
 **Issue**: Application allowed all origins (`*`) which enables cross-origin attacks.
 
@@ -23,7 +47,7 @@ CORS_ORIGINS=http://localhost:3000,http://localhost:3001
 CORS_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
 ```
 
-### 2. Missing Security Headers ⚠️ **HIGH PRIORITY**
+### 4. Missing Security Headers ⚠️ **HIGH PRIORITY**
 
 **Issue**: No security headers to prevent common web attacks.
 
@@ -40,12 +64,17 @@ CORS_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',
   'X-XSS-Protection': '1; mode=block',
-  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'",
-  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains'
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()',
+  'Cross-Origin-Embedder-Policy': 'require-corp',
+  'Cross-Origin-Opener-Policy': 'same-origin',
+  'Cross-Origin-Resource-Policy': 'same-origin',
+  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'nonce-{random}' https://vercel.live; style-src 'self' 'nonce-{random}'; img-src 'self' data: https:; connect-src 'self' https://api.vercel.com; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests",
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload'
 }
 ```
 
-### 3. Information Disclosure ⚠️ **HIGH PRIORITY**
+### 5. Information Disclosure ⚠️ **HIGH PRIORITY**
 
 **Issue**: Stack traces and internal errors exposed in production.
 
@@ -55,7 +84,7 @@ CORS_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
 - Generic error messages for production
 - Debug information only available in development
 
-### 4. No Authentication on Sensitive Endpoints ⚠️ **CRITICAL**
+### 6. No Authentication on Sensitive Endpoints ⚠️ **CRITICAL**
 
 **Issue**: Reset endpoint was publicly accessible, allowing data destruction.
 
@@ -75,7 +104,7 @@ curl -X POST http://localhost:3000/api/reset \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
-### 5. Missing Rate Limiting ⚠️ **HIGH PRIORITY**
+### 7. Missing Rate Limiting ⚠️ **HIGH PRIORITY**
 
 **Issue**: No protection against DoS attacks or abuse.
 
@@ -91,7 +120,7 @@ RATE_LIMIT_MAX_REQUESTS=100
 RATE_LIMIT_WINDOW=60000  # 1 minute in ms
 ```
 
-### 6. Input Validation Vulnerabilities ⚠️ **HIGH PRIORITY**
+### 8. Input Validation Vulnerabilities ⚠️ **HIGH PRIORITY**
 
 **Issue**: Insufficient input sanitization allowing XSS attacks.
 
@@ -101,6 +130,48 @@ RATE_LIMIT_WINDOW=60000  # 1 minute in ms
 - Removal of dangerous HTML tags and JavaScript protocols
 - Number overflow protection
 - Pattern-based validation for string fields
+
+### 9. Content Security Policy Issues ⚠️ **HIGH PRIORITY**
+
+**Issue**: Using `unsafe-inline` in CSP headers and missing advanced security directives.
+
+**Fix Applied**:
+- Removed `unsafe-inline` from CSP
+- Implemented nonce-based CSP for dynamic content
+- Added comprehensive security directives
+- Enhanced permissions policy
+
+**Enhanced CSP Implementation**:
+```javascript
+const cspHeader = {
+  'Content-Security-Policy': [
+    "default-src 'self'",
+    "script-src 'self' 'nonce-{random}' https://vercel.live",
+    "style-src 'self' 'nonce-{random}'",
+    "img-src 'self' data: https:",
+    "connect-src 'self' https://api.vercel.com",
+    "font-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "upgrade-insecure-requests"
+  ].join('; ')
+};
+```
+
+### 10. Session Management Vulnerabilities ⚠️ **HIGH PRIORITY**
+
+**Issue**: No proper session management system with secure cookies and expiration.
+
+**Fix Applied**:
+- Implemented secure session management middleware
+- Added session expiration and cleanup mechanisms
+- Implemented proper cookie security settings
+- Added session statistics and monitoring
+
+**Files Added**:
+- `src/middleware/session.js` - Comprehensive session management
 
 ## 🔐 Security Configuration
 
@@ -294,8 +365,60 @@ Should include:
 - `X-Content-Type-Options: nosniff`
 - `X-Frame-Options: DENY`
 - `X-XSS-Protection: 1; mode=block`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Permissions-Policy: geolocation=(), microphone=(), camera=(), ...`
+- `Cross-Origin-Embedder-Policy: require-corp`
+- `Cross-Origin-Opener-Policy: same-origin`
+- `Cross-Origin-Resource-Policy: same-origin`
 - `Content-Security-Policy: ...`
 - `Strict-Transport-Security: ...` (in production)
+
+### 6. Test XSS Protection
+```bash
+# Test with malicious inputs that should be sanitized
+curl -X POST http://localhost:3000/api/sources \
+  -H "Content-Type: application/json" \
+  -d '{"name": "<script>alert(\"xss\")</script>Test"}'
+
+# Test JavaScript protocol injection
+curl -X POST http://localhost:3000/api/sources \
+  -H "Content-Type: application/json" \
+  -d '{"name": "javascript:alert(\"xss\")"}'
+
+# Test event handler injection
+curl -X POST http://localhost:3000/api/sources \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Test onclick=alert(\"xss\")"}'
+```
+
+### 7. Test SQL Injection Protection
+```bash
+# Test with malicious SQL inputs that should be rejected
+curl -X POST http://localhost:3000/api/sources \
+  -H "Content-Type: application/json" \
+  -d '{"name": "\"; DROP TABLE users; --"}'
+
+curl -X POST http://localhost:3000/api/sources \
+  -H "Content-Type: application/json" \
+  -d '{"name": "1'\'' OR '\''1'\''='\''1"}'
+
+curl -X POST http://localhost:3000/api/sources \
+  -H "Content-Type: application/json" \
+  -d '{"name": "UNION SELECT * FROM users"}'
+```
+
+### 8. Test Session Management
+```bash
+# Test session creation and expiration
+curl -c cookies.txt http://localhost:3000/api/dev-auth
+
+# Test session persistence
+curl -b cookies.txt http://localhost:3000/api/sources
+
+# Test session cleanup (after expiration)
+sleep 3600  # Wait for session to expire
+curl -b cookies.txt http://localhost:3000/api/sources
+```
 
 ## 📊 Security Monitoring
 
@@ -338,6 +461,12 @@ Set up alerts for:
 - [ ] Set appropriate rate limits
 - [ ] Test all security features
 - [ ] Verify security headers
+- [ ] Run `npm audit` to check for vulnerabilities
+- [ ] Test XSS protection with malicious inputs
+- [ ] Test SQL injection protection
+- [ ] Verify session management functionality
+- [ ] Test authentication and authorization
+- [ ] Verify CSP nonce implementation
 
 ### Production Monitoring
 - [ ] Monitor security logs
@@ -346,19 +475,36 @@ Set up alerts for:
 - [ ] Regular security updates of dependencies
 - [ ] Periodic security audits
 - [ ] Backup and recovery procedures
+- [ ] Monitor session statistics
+- [ ] Track security event frequency
+- [ ] Regular penetration testing
+- [ ] Security code reviews
+
+### Ongoing Security Maintenance
+- [ ] Regular dependency updates with `npm update`
+- [ ] Weekly `npm audit` checks
+- [ ] Monthly security reviews
+- [ ] Quarterly penetration testing
+- [ ] Annual security training updates
+- [ ] Incident response procedure testing
+- [ ] Security documentation updates
 
 ## 🛡️ Security Levels Achieved
 
-- ✅ **Input Validation**: XSS protection, sanitization
-- ✅ **Authentication**: Token-based auth for sensitive ops
+- ✅ **Dependency Security**: All vulnerabilities patched, regular auditing
+- ✅ **Input Validation**: XSS protection, sanitization, SQL injection prevention
+- ✅ **Authentication**: Cryptographically secure token generation
 - ✅ **Authorization**: Protected destructive endpoints
-- ✅ **Rate Limiting**: DoS protection
+- ✅ **Rate Limiting**: DoS protection with configurable limits
 - ✅ **CORS**: Environment-specific configuration
-- ✅ **Security Headers**: CSP, HSTS, XSS protection
-- ✅ **Error Handling**: No information disclosure
-- ✅ **SQL Injection**: Parameterized queries
+- ✅ **Security Headers**: Comprehensive CSP, HSTS, XSS protection, permissions policy
+- ✅ **Error Handling**: No information disclosure in production
+- ✅ **SQL Injection**: Parameterized queries with libsql/client
 - ✅ **Environment Security**: Validation and masking
-- ✅ **Session Security**: Secure token generation
+- ✅ **Session Security**: Secure session management with expiration
+- ✅ **Content Security Policy**: Nonce-based CSP without unsafe-inline
+- ✅ **Cross-Origin Policies**: COEP, COOP, CORP headers
+- ✅ **Security Monitoring**: Event logging and statistics
 
 ## 🔮 Future Security Enhancements
 
