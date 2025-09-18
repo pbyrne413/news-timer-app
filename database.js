@@ -1,10 +1,14 @@
 import { createClient } from '@libsql/client';
+import { config } from './src/config/index.js';
 
 class Database {
   constructor() {
     this.client = createClient({
-      url: (process.env.TURSO_DATABASE_URL || 'file:./database.sqlite').trim(),
-      authToken: process.env.TURSO_AUTH_TOKEN?.trim(),
+      url: config.database.url,
+      authToken: config.database.authToken,
+      // Turso optimizations for serverless
+      intMode: 'number', // Better JSON serialization
+      syncInterval: 60, // Sync every 60 seconds for embedded replicas
     });
     this._initialized = false;
   }

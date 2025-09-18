@@ -1,33 +1,46 @@
-import Database from '../../../database.js';
+// Vercel serverless function using refactored architecture
+import { ServiceContainer } from '../../../src/container/ServiceContainer.js';
+import { SourceController } from '../../../src/controllers/SourceController.js';
+import { corsMiddleware } from '../../../src/middleware/cors.js';
+import { validate } from '../../../src/middleware/validation.js';
+import { errorHandler } from '../../../src/middleware/errorHandler.js';
+
+// Initialize container for serverless environment
+const container = new ServiceContainer();
 
 export default async function handler(req, res) {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-
-  const db = new Database();
-
   try {
+    // Apply CORS middleware
+    corsMiddleware(req, res, () => {});
+    
+    if (req.method === 'OPTIONS') {
+      return;
+    }
+
+    // Initialize container if not already done
+    await container.initialize();
+
+    // Create controller instance
+    const sourceController = new SourceController(container);
+
     if (req.method === 'PUT') {
-      const { sourceKey } = req.query;
-      const { allocation } = req.body;
+      // Move sourceKey from query to params for consistency with controller
+      req.params = { sourceKey: req.query.sourceKey };
       
-      await db.updateSourceAllocation(sourceKey, allocation);
-      res.json({ success: true });
+      // Apply validation middleware
+      await new Promise((resolve, reject) => {
+        validate('updateAllocation')(req, res, (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+
+      await sourceController.updateAllocation(req, res);
     } else {
       res.setHeader('Allow', ['PUT']);
-      res.status(405).end(`Method ${req.method} Not Allowed`);
+      res.status(405).json({ error: `Method ${req.method} Not Allowed` });
     }
   } catch (error) {
-    console.error('Database error:', error);
-    res.status(500).json({ error: 'Database operation failed' });
-  } finally {
-    db.close();
+    errorHandler(error, req, res, () => {});
   }
 }

@@ -5,10 +5,15 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js",
-    "build": "echo 'No build step needed for static files'",
-    "vercel-build": "echo 'No build step needed'"
+    "start": "node server-refactored.js",
+    "start:legacy": "node server.js",
+    "dev": "nodemon server-refactored.js",
+    "dev:legacy": "nodemon server.js",
+    "dev:vercel": "vercel dev",
+    "build": "echo 'Static files ready for deployment'",
+    "vercel-build": "echo 'Serverless functions ready'",
+    "deploy": "vercel --prod",
+    "preview": "vercel"
   },
   "dependencies": {
     "@libsql/client": "^0.14.0",

@@ -1,70 +1,45 @@
-import Database from '../../database.js';
+// Vercel serverless function using refactored architecture
+import { ServiceContainer } from '../../src/container/ServiceContainer.js';
+import { SourceController } from '../../src/controllers/SourceController.js';
+import { corsMiddleware } from '../../src/middleware/cors.js';
+import { validate } from '../../src/middleware/validation.js';
+import { errorHandler } from '../../src/middleware/errorHandler.js';
+
+// Initialize container for serverless environment
+const container = new ServiceContainer();
 
 export default async function handler(req, res) {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-
-  const db = new Database();
-
   try {
+    // Apply CORS middleware
+    corsMiddleware(req, res, () => {});
+    
+    if (req.method === 'OPTIONS') {
+      return;
+    }
+
+    // Initialize container if not already done
+    await container.initialize();
+
+    // Create controller instance
+    const sourceController = new SourceController(container);
+
     if (req.method === 'GET') {
-      const today = new Date().toISOString().split('T')[0];
-      const sources = await db.getSources();
-      
-      const sourcesWithUsage = await Promise.all(
-        sources.map(async (source) => {
-          const usage = await db.getDailyUsage(source.id, today);
-          
-          return {
-            key: source.key,
-            name: source.name,
-            icon: source.icon,
-            allocated: source.default_allocation,
-            used: usage ? usage.time_used : 0,
-            sessions: usage ? usage.sessions : 0,
-            overrunTime: usage ? usage.overrun_time : 0
-          };
-        })
-      );
-      
-      res.json(sourcesWithUsage);
+      await sourceController.getSources(req, res);
     } else if (req.method === 'POST') {
-      const { name, icon, allocation } = req.body;
-      
-      const key = name.toLowerCase().replace(/[^a-z0-9]/g, '-');
-      
-      // Check if source already exists
-      const existingSource = await db.getSourceByKey(key);
-      if (existingSource) {
-        return res.status(400).json({ error: 'Source already exists' });
-      }
-      
-      const sourceId = await db.addSource(key, name, icon || '📰', allocation || 300);
-      
-      res.json({
-        key,
-        name,
-        icon: icon || '📰',
-        allocated: allocation || 300,
-        used: 0,
-        sessions: 0,
-        overrunTime: 0
+      // Apply validation middleware
+      await new Promise((resolve, reject) => {
+        validate('addSource')(req, res, (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
       });
+
+      await sourceController.addSource(req, res);
     } else {
       res.setHeader('Allow', ['GET', 'POST']);
-      res.status(405).end(`Method ${req.method} Not Allowed`);
+      res.status(405).json({ error: `Method ${req.method} Not Allowed` });
     }
   } catch (error) {
-    console.error('Database error:', error);
-    res.status(500).json({ error: 'Database operation failed' });
-  } finally {
-    db.close();
+    errorHandler(error, req, res, () => {});
   }
 }

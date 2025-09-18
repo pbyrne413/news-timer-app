@@ -1,0 +1,16 @@
+# Vercel ignore file - exclude development files
+node_modules
+.git
+.env.local
+.env.development
+.env.test
+*.log
+.DS_Store
+server.js
+server-refactored.js
+ARCHITECTURE.md
+REFACTORING_SUMMARY.md
+DEPLOYMENT_GUIDE.md
+vercel-deployment.md
+VERCEL_FIX_GUIDE.md
+style-enhanced.css
