@@ -1,6 +1,6 @@
 import { AppError } from './errorHandler.js';
 import { config } from '../config/index.js';
-import { DateUtils } from '../utils/DateUtils.js';
+import { DateTime } from 'luxon';
 
 // Input sanitization utilities
 const sanitizeString = (str) => {
@@ -174,7 +174,7 @@ const MAX_REQUESTS = 100; // requests per window
 
 export const rateLimit = (req, res, next) => {
   const clientId = req.ip || req.connection.remoteAddress || 'unknown';
-  const now = DateUtils.getCurrentTime();
+  const now = DateTime.now().toMillis();
   
   if (!requestCounts.has(clientId)) {
     requestCounts.set(clientId, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });

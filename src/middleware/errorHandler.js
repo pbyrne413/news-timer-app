@@ -10,7 +10,7 @@ export class AppError extends Error {
 }
 
 import { config } from '../config/index.js';
-import { DateUtils } from '../utils/DateUtils.js';
+import { DateTime } from 'luxon';
 
 // Secure error logging without exposing sensitive info
 const logError = (error, req) => {
@@ -18,7 +18,7 @@ const logError = (error, req) => {
     message: error.message,
     url: req.url,
     method: req.method,
-    timestamp: DateUtils.getCurrentTimestamp(),
+    timestamp: DateTime.now().toISO(),
     userAgent: req.headers['user-agent'],
     ip: req.ip || req.connection.remoteAddress,
     ...(config.server.env === 'development' && { stack: error.stack })

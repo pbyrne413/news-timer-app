@@ -1,9 +1,24 @@
 // Enhanced health check with performance metrics
 import { corsMiddleware } from '../src/middleware/cors.js';
-import { DateUtils } from '../src/utils/DateUtils.js';
+import { DateTime } from 'luxon';
+
+// Format duration in milliseconds to human readable
+const formatDuration = (milliseconds) => {
+  const hours = Math.floor(milliseconds / (1000 * 60 * 60));
+  const minutes = Math.floor((milliseconds % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((milliseconds % (1000 * 60)) / 1000);
+  
+  if (hours > 0) {
+    return `${hours}h ${minutes}m ${seconds}s`;
+  } else if (minutes > 0) {
+    return `${minutes}m ${seconds}s`;
+  } else {
+    return `${seconds}s`;
+  }
+};
 
 export default async function handler(req, res) {
-  const startTime = DateUtils.getCurrentTime();
+  const startTime = DateTime.now().toMillis();
   
   try {
     // Apply CORS middleware
@@ -13,29 +28,29 @@ export default async function handler(req, res) {
       return;
     }
 
-    const responseTime = DateUtils.getCurrentTime() - startTime;
+    const responseTime = DateTime.now().toMillis() - startTime;
     const memoryUsage = process.memoryUsage();
 
     const healthData = {
       status: 'OK',
-      timestamp: DateUtils.getCurrentTimestamp(),
+      timestamp: DateTime.now().toISO(),
       architecture: 'refactored-optimized',
       version: '2.0.0',
       environment: process.env.NODE_ENV || 'development',
       region: process.env.VERCEL_REGION || 'local',
       performance: {
-        responseTime: DateUtils.formatDuration(responseTime),
+        responseTime: formatDuration(responseTime),
         memory: {
           rss: Math.round(memoryUsage.rss / 1024 / 1024), // MB
           heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024),
           heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024),
           external: Math.round(memoryUsage.external / 1024 / 1024)
         },
-        uptime: DateUtils.formatDuration(process.uptime() * 1000)
+        uptime: formatDuration(process.uptime() * 1000)
       },
       database: {
         status: 'healthy',
-        timestamp: DateUtils.getCurrentTimestamp()
+        timestamp: DateTime.now().toISO()
       },
       features: {
         solidPrinciples: true,
@@ -53,9 +68,9 @@ export default async function handler(req, res) {
     
     res.status(500).json({
       status: 'ERROR',
-      timestamp: DateUtils.getCurrentTimestamp(),
+      timestamp: DateTime.now().toISO(),
       error: error.message,
-      responseTime: DateUtils.formatDuration(DateUtils.getCurrentTime() - startTime)
+      responseTime: formatDuration(DateTime.now().toMillis() - startTime)
     });
   }
 }

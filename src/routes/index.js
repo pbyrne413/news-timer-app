@@ -2,7 +2,7 @@
 import express from 'express';
 import { corsMiddleware } from '../middleware/cors.js';
 import { validate } from '../middleware/validation.js';
-import { DateUtils } from '../utils/DateUtils.js';
+import { DateTime } from 'luxon';
 import { SourceController } from '../controllers/SourceController.js';
 import { UsageController } from '../controllers/UsageController.js';
 import { StatsController } from '../controllers/StatsController.js';
@@ -32,7 +32,7 @@ export class ApiRouter {
 
     // Health check endpoint
     this.router.get('/health', (req, res) => {
-      res.json({ status: 'OK', timestamp: DateUtils.getCurrentTimestamp() });
+      res.json({ status: 'OK', timestamp: DateTime.now().toISO() });
     });
 
     // Source routes
