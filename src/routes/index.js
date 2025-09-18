@@ -36,9 +36,8 @@ export class ApiRouter {
     });
 
     // Source routes
-    this.router.route('/sources')
-      .get(sourceController.getSources)
-      .post(validate('addSource'), sourceController.addSource);
+    this.router.get('/sources', sourceController.getSources);
+    this.router.post('/sources', validate('addSource'), sourceController.addSource);
     
     this.router.put('/sources/:sourceKey/allocation', 
       validate('updateAllocation'), 

@@ -41,8 +41,11 @@ export class Application {
     this.app.use(express.json({ limit: '10mb' }));
     this.app.use(express.urlencoded({ extended: true }));
 
-    // Static file serving
-    this.app.use(express.static('.'));
+    // Static file serving with proper configuration
+    this.app.use(express.static('.', {
+      index: false, // Don't serve index.html for directories
+      redirect: false // Don't redirect trailing slashes
+    }));
   }
 
   _setupRoutes() {
