@@ -1,4 +1,6 @@
-module.exports = async function handler(req, res) {
+import Database from '../../database.js';
+
+export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -9,11 +11,21 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  if (req.method === 'POST') {
-    // For now, just return success
-    res.json({ success: true });
-  } else {
-    res.setHeader('Allow', ['POST']);
-    res.status(405).end(`Method ${req.method} Not Allowed`);
+  const db = new Database();
+
+  try {
+    if (req.method === 'POST') {
+      const today = new Date().toISOString().split('T')[0];
+      await db.clearDailyData(today);
+      res.json({ success: true });
+    } else {
+      res.setHeader('Allow', ['POST']);
+      res.status(405).end(`Method ${req.method} Not Allowed`);
+    }
+  } catch (error) {
+    console.error('Database error:', error);
+    res.status(500).json({ error: 'Database operation failed' });
+  } finally {
+    db.close();
   }
 }

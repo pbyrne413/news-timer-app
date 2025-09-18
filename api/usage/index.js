@@ -1,4 +1,6 @@
-module.exports = async function handler(req, res) {
+import Database from '../../database.js';
+
+export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -9,17 +11,29 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  if (req.method === 'POST') {
-    try {
+  const db = new Database();
+
+  try {
+    if (req.method === 'POST') {
       const { sourceKey, timeUsed, sessions, overrunTime } = req.body;
-      // For now, just return success (in a real app, you'd save to database)
+      
+      const source = await db.getSourceByKey(sourceKey);
+      if (!source) {
+        return res.status(404).json({ error: 'Source not found' });
+      }
+      
+      const today = new Date().toISOString().split('T')[0];
+      await db.updateDailyUsage(source.id, today, timeUsed, sessions, overrunTime || 0);
+      
       res.json({ success: true });
-    } catch (error) {
-      console.error('Error recording usage:', error);
-      res.status(500).json({ error: 'Failed to record usage' });
+    } else {
+      res.setHeader('Allow', ['POST']);
+      res.status(405).end(`Method ${req.method} Not Allowed`);
     }
-  } else {
-    res.setHeader('Allow', ['POST']);
-    res.status(405).end(`Method ${req.method} Not Allowed`);
+  } catch (error) {
+    console.error('Database error:', error);
+    res.status(500).json({ error: 'Database operation failed' });
+  } finally {
+    db.close();
   }
 }

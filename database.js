@@ -1,31 +1,38 @@
-import sqlite3 from 'sqlite3';
-import { promisify } from 'util';
+import { createClient } from '@libsql/client';
 
 class Database {
   constructor() {
-    this.db = new sqlite3.Database(process.env.NODE_ENV === 'production' ? '/tmp/database.sqlite' : './database.sqlite');
-    this.run = promisify(this.db.run.bind(this.db));
-    this.get = promisify(this.db.get.bind(this.db));
-    this.all = promisify(this.db.all.bind(this.db));
-    this.initializeTables();
+    this.client = createClient({
+      url: (process.env.TURSO_DATABASE_URL || 'file:./database.sqlite').trim(),
+      authToken: process.env.TURSO_AUTH_TOKEN?.trim(),
+    });
+    this._initialized = false;
+  }
+
+  async ensureInitialized() {
+    if (!this._initialized) {
+      await this.initializeTables();
+      this._initialized = true;
+    }
   }
 
   async initializeTables() {
-    // Create news_sources table
-    await this.run(`
-      CREATE TABLE IF NOT EXISTS news_sources (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        key TEXT UNIQUE NOT NULL,
-        name TEXT NOT NULL,
-        icon TEXT NOT NULL,
-        default_allocation INTEGER DEFAULT 300,
-        is_active BOOLEAN DEFAULT 1,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
+    try {
+      // Create news_sources table
+      await this.client.execute(`
+        CREATE TABLE IF NOT EXISTS news_sources (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          key TEXT UNIQUE NOT NULL,
+          name TEXT NOT NULL,
+          icon TEXT NOT NULL,
+          default_allocation INTEGER DEFAULT 300,
+          is_active BOOLEAN DEFAULT 1,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
 
     // Create daily_usages table
-    await this.run(`
+    await this.client.execute(`
       CREATE TABLE IF NOT EXISTS daily_usages (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         source_id INTEGER NOT NULL,
@@ -40,7 +47,7 @@ class Database {
     `);
 
     // Create user_settings table
-    await this.run(`
+    await this.client.execute(`
       CREATE TABLE IF NOT EXISTS user_settings (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         total_time_limit INTEGER DEFAULT 1800,
@@ -50,14 +57,19 @@ class Database {
       )
     `);
 
-    // Initialize default data
-    await this.initializeDefaultData();
+      // Initialize default data
+      await this.initializeDefaultData();
+      console.log('Database tables initialized successfully');
+    } catch (error) {
+      console.error('Database initialization error:', error);
+      throw error;
+    }
   }
 
   async initializeDefaultData() {
     // Check if we already have data
-    const existingSources = await this.get('SELECT COUNT(*) as count FROM news_sources');
-    if (existingSources.count > 0) return;
+    const existingSources = await this.client.execute('SELECT COUNT(*) as count FROM news_sources');
+    if (existingSources.rows[0].count > 0) return;
 
     // Create default news sources
     const defaultSources = [
@@ -70,105 +82,130 @@ class Database {
     ];
 
     for (const sourceData of defaultSources) {
-      await this.run(
-        'INSERT INTO news_sources (key, name, icon, default_allocation) VALUES (?, ?, ?, ?)',
-        [sourceData.key, sourceData.name, sourceData.icon, sourceData.defaultAllocation]
-      );
+      await this.client.execute({
+        sql: 'INSERT INTO news_sources (key, name, icon, default_allocation) VALUES (?, ?, ?, ?)',
+        args: [sourceData.key, sourceData.name, sourceData.icon, sourceData.defaultAllocation]
+      });
     }
 
     // Create default user settings
-    await this.run(
-      'INSERT INTO user_settings (total_time_limit, auto_start) VALUES (?, ?)',
-      [1800, false]
-    );
+    await this.client.execute({
+      sql: 'INSERT INTO user_settings (total_time_limit, auto_start) VALUES (?, ?)',
+      args: [1800, false]
+    });
 
     console.log('Default data initialized');
   }
 
   // News Sources methods
   async getSources() {
-    return this.all('SELECT * FROM news_sources WHERE is_active = 1');
+    await this.ensureInitialized();
+    const result = await this.client.execute('SELECT * FROM news_sources WHERE is_active = 1');
+    return result.rows;
   }
 
   async getSourceByKey(key) {
-    return this.get('SELECT * FROM news_sources WHERE key = ?', [key]);
+    await this.ensureInitialized();
+    const result = await this.client.execute({
+      sql: 'SELECT * FROM news_sources WHERE key = ?',
+      args: [key]
+    });
+    return result.rows[0] || null;
   }
 
   async addSource(key, name, icon, allocation) {
-    const result = await this.run(
-      'INSERT INTO news_sources (key, name, icon, default_allocation) VALUES (?, ?, ?, ?)',
-      [key, name, icon, allocation]
-    );
-    return result.lastID;
+    await this.ensureInitialized();
+    const result = await this.client.execute({
+      sql: 'INSERT INTO news_sources (key, name, icon, default_allocation) VALUES (?, ?, ?, ?)',
+      args: [key, name, icon, allocation]
+    });
+    return result.lastInsertRowid;
   }
 
   async updateSourceAllocation(key, allocation) {
-    return this.run(
-      'UPDATE news_sources SET default_allocation = ? WHERE key = ?',
-      [allocation, key]
-    );
+    await this.ensureInitialized();
+    return this.client.execute({
+      sql: 'UPDATE news_sources SET default_allocation = ? WHERE key = ?',
+      args: [allocation, key]
+    });
   }
 
   // Daily Usage methods
   async getDailyUsage(sourceId, date) {
-    return this.get(
-      'SELECT * FROM daily_usages WHERE source_id = ? AND date = ?',
-      [sourceId, date]
-    );
+    await this.ensureInitialized();
+    const result = await this.client.execute({
+      sql: 'SELECT * FROM daily_usages WHERE source_id = ? AND date = ?',
+      args: [sourceId, date]
+    });
+    return result.rows[0] || null;
   }
 
   async updateDailyUsage(sourceId, date, timeUsed, sessions, overrunTime) {
+    await this.ensureInitialized();
     const existing = await this.getDailyUsage(sourceId, date);
     
     if (existing) {
-      return this.run(
-        'UPDATE daily_usages SET time_used = ?, sessions = ?, overrun_time = ? WHERE source_id = ? AND date = ?',
-        [timeUsed, sessions, overrunTime, sourceId, date]
-      );
+      return this.client.execute({
+        sql: 'UPDATE daily_usages SET time_used = ?, sessions = ?, overrun_time = ? WHERE source_id = ? AND date = ?',
+        args: [timeUsed, sessions, overrunTime, sourceId, date]
+      });
     } else {
-      return this.run(
-        'INSERT INTO daily_usages (source_id, date, time_used, sessions, overrun_time) VALUES (?, ?, ?, ?, ?)',
-        [sourceId, date, timeUsed, sessions, overrunTime]
-      );
+      return this.client.execute({
+        sql: 'INSERT INTO daily_usages (source_id, date, time_used, sessions, overrun_time) VALUES (?, ?, ?, ?, ?)',
+        args: [sourceId, date, timeUsed, sessions, overrunTime]
+      });
     }
   }
 
   async getDailyUsages(date) {
-    return this.all(`
-      SELECT du.*, ns.key, ns.name, ns.icon, ns.default_allocation
-      FROM daily_usages du
-      JOIN news_sources ns ON du.source_id = ns.id
-      WHERE du.date = ?
-    `, [date]);
+    await this.ensureInitialized();
+    const result = await this.client.execute({
+      sql: `
+        SELECT du.*, ns.key, ns.name, ns.icon, ns.default_allocation
+        FROM daily_usages du
+        JOIN news_sources ns ON du.source_id = ns.id
+        WHERE du.date = ?
+      `,
+      args: [date]
+    });
+    return result.rows;
   }
 
   async clearDailyData(date) {
-    return this.run('DELETE FROM daily_usages WHERE date = ?', [date]);
+    await this.ensureInitialized();
+    return this.client.execute({
+      sql: 'DELETE FROM daily_usages WHERE date = ?',
+      args: [date]
+    });
   }
 
   // User Settings methods
   async getSettings() {
-    return this.get('SELECT * FROM user_settings ORDER BY id DESC LIMIT 1');
+    await this.ensureInitialized();
+    const result = await this.client.execute('SELECT * FROM user_settings ORDER BY id DESC LIMIT 1');
+    return result.rows[0] || null;
   }
 
   async updateSettings(totalTimeLimit, autoStart) {
+    await this.ensureInitialized();
     const existing = await this.getSettings();
     
     if (existing) {
-      return this.run(
-        'UPDATE user_settings SET total_time_limit = ?, auto_start = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-        [totalTimeLimit, autoStart, existing.id]
-      );
+      return this.client.execute({
+        sql: 'UPDATE user_settings SET total_time_limit = ?, auto_start = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        args: [totalTimeLimit, autoStart, existing.id]
+      });
     } else {
-      return this.run(
-        'INSERT INTO user_settings (total_time_limit, auto_start) VALUES (?, ?)',
-        [totalTimeLimit, autoStart]
-      );
+      return this.client.execute({
+        sql: 'INSERT INTO user_settings (total_time_limit, auto_start) VALUES (?, ?)',
+        args: [totalTimeLimit, autoStart]
+      });
     }
   }
 
   close() {
-    this.db.close();
+    // Turso client handles connection lifecycle automatically
+    // No explicit close needed
   }
 }
 

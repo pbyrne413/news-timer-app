@@ -1,4 +1,6 @@
-module.exports = async function handler(req, res) {
+import Database from '../../../database.js';
+
+export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -9,19 +11,23 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  if (req.method === 'PUT') {
-    try {
+  const db = new Database();
+
+  try {
+    if (req.method === 'PUT') {
       const { sourceKey } = req.query;
       const { allocation } = req.body;
       
-      // For now, just return success
+      await db.updateSourceAllocation(sourceKey, allocation);
       res.json({ success: true });
-    } catch (error) {
-      console.error('Error updating source allocation:', error);
-      res.status(500).json({ error: 'Failed to update source allocation' });
+    } else {
+      res.setHeader('Allow', ['PUT']);
+      res.status(405).end(`Method ${req.method} Not Allowed`);
     }
-  } else {
-    res.setHeader('Allow', ['PUT']);
-    res.status(405).end(`Method ${req.method} Not Allowed`);
+  } catch (error) {
+    console.error('Database error:', error);
+    res.status(500).json({ error: 'Database operation failed' });
+  } finally {
+    db.close();
   }
 }

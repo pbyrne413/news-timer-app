@@ -2,6 +2,7 @@
   "name": "news-timer-app",
   "version": "1.0.0",
   "description": "A timer app to limit daily news reading time",
+  "type": "module",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -10,10 +11,10 @@
     "vercel-build": "echo 'No build step needed'"
   },
   "dependencies": {
+    "@libsql/client": "^0.14.0",
     "@vercel/speed-insights": "^1.2.0",
     "cors": "^2.8.5",
-    "express": "^4.18.2",
-    "sqlite3": "^5.1.6"
+    "express": "^4.18.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.1",

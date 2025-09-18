@@ -168,6 +168,16 @@ class NewsTimer {
             this.sourceTotalElements[source] = document.getElementById(`${source}-total`);
             this.sourceAllocationElements[source] = document.getElementById(`${source}-alloc`);
             this.progressItems[source] = document.querySelector(`.progress-item[data-source="${source}"]`);
+            
+            // Set up event listeners for progress items (source clicking)
+            if (this.progressItems[source]) {
+                this.progressItems[source].addEventListener('click', () => this.selectSource(source));
+            }
+            
+            // Set up event listeners for source allocation changes in modal
+            if (this.sourceAllocationElements[source]) {
+                this.sourceAllocationElements[source].addEventListener('change', () => this.updateSourceAllocationFromModal(source));
+            }
         });
     }
     
@@ -180,9 +190,15 @@ class NewsTimer {
         // Settings modal
         this.settingsBtn.addEventListener('click', () => this.openSettingsModal());
         this.closeModalBtn.addEventListener('click', () => this.closeSettingsModal());
-        this.saveSettingsBtn.addEventListener('click', () => this.saveSettingsFromModal());
+        this.saveSettingsBtn.addEventListener('click', () => {
+            console.log('Save settings button clicked');
+            this.saveSettingsFromModal();
+        });
         this.cancelSettingsBtn.addEventListener('click', () => this.closeSettingsModal());
-        this.distributeTimeBtn.addEventListener('click', () => this.distributeTimeEvenly());
+        this.distributeTimeBtn.addEventListener('click', () => {
+            console.log('Distribute time button clicked');
+            this.distributeTimeEvenly();
+        });
         
         // Data management
         this.exportDataBtn.addEventListener('click', () => this.exportData());
@@ -196,19 +212,7 @@ class NewsTimer {
         this.checkMathAnswerBtn.addEventListener('click', () => this.checkMathAnswer());
         this.cancelMathChallengeBtn.addEventListener('click', () => this.closeMathChallenge());
         
-        // Progress item clicks (source selection)
-        Object.keys(this.progressItems).forEach(source => {
-            if (this.progressItems[source]) {
-                this.progressItems[source].addEventListener('click', () => this.selectSource(source));
-            }
-        });
-        
-        // Source allocation changes in modal
-        Object.keys(this.sourceAllocationElements).forEach(source => {
-            if (this.sourceAllocationElements[source]) {
-                this.sourceAllocationElements[source].addEventListener('change', () => this.updateSourceAllocationFromModal(source));
-            }
-        });
+        // Progress item clicks and source allocation changes will be set up in initializeProgressElements()
         
         // Close modals when clicking outside
         this.settingsModal.addEventListener('click', (e) => {
@@ -502,7 +506,10 @@ class NewsTimer {
     }
     
     async distributeTimeEvenly() {
-        const totalMinutes = Math.floor(this.totalTimeLimit / 60);
+        console.log('distributeTimeEvenly called');
+        // Get the current value from the input field, not the stored value
+        const totalMinutes = parseInt(this.totalTimeLimitInput.value) || 30;
+        this.totalTimeLimit = totalMinutes * 60; // Update the stored value too
         const minutesPerSource = Math.floor(totalMinutes / Object.keys(this.sourceTimers).length);
         const remainder = totalMinutes % Object.keys(this.sourceTimers).length;
         
@@ -574,6 +581,7 @@ class NewsTimer {
     }
     
     async saveSettingsFromModal() {
+        console.log('saveSettingsFromModal called');
         await this.updateTotalTimeLimit();
         await this.updateAutoStart();
         this.closeSettingsModal();
