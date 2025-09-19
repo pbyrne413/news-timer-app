@@ -177,7 +177,7 @@ class NewsTimer {
     
     initializeElements() {
         // Main timer elements
-        this.totalTimeDisplay = document.getElementById('total-time-left');
+        this.totalTimeDisplay = document.getElementById('total-time-left'); // May be null if removed
         this.startBtn = document.getElementById('start-btn');
         this.pauseBtn = document.getElementById('pause-btn');
         this.resetBtn = document.getElementById('reset-btn');
@@ -362,7 +362,9 @@ class NewsTimer {
         this.isRunning = true;
         this.startBtn.disabled = true;
         this.pauseBtn.disabled = false;
-        this.totalTimeDisplay.classList.add('running');
+        if (this.totalTimeDisplay) {
+            this.totalTimeDisplay.classList.add('running');
+        }
         
         this.interval = setInterval(async () => {
             this.dailyTimeUsed++;
@@ -403,7 +405,9 @@ class NewsTimer {
         this.isRunning = false;
         this.startBtn.disabled = false;
         this.pauseBtn.disabled = true;
-        this.totalTimeDisplay.classList.remove('running');
+        if (this.totalTimeDisplay) {
+            this.totalTimeDisplay.classList.remove('running');
+        }
         
         if (this.interval) {
             clearInterval(this.interval);
@@ -532,16 +536,23 @@ class NewsTimer {
         const remainingMinutes = Math.floor((this.totalTimeLimit - this.dailyTimeUsed) / 60);
         const remainingSeconds = (this.totalTimeLimit - this.dailyTimeUsed) % 60;
         
-        this.totalTimeDisplay.textContent = `${remainingMinutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+        // Update total time display if element exists
+        if (this.totalTimeDisplay) {
+            this.totalTimeDisplay.textContent = `${remainingMinutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+        
         this.timeUsedDisplay.textContent = `${usedMinutes.toString().padStart(2, '0')}:${usedSeconds.toString().padStart(2, '0')}`;
         this.timeRemainingDisplay.textContent = `${remainingMinutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
         
         // Update individual source displays
         this.updateSourceDisplays();
         
-        // Update progress bars
-        const totalProgress = (this.dailyTimeUsed / this.totalTimeLimit) * 100;
-        document.getElementById('total-progress').style.width = `${Math.min(totalProgress, 100)}%`;
+        // Update progress bars if element exists
+        const totalProgressElement = document.getElementById('total-progress');
+        if (totalProgressElement) {
+            const totalProgress = (this.dailyTimeUsed / this.totalTimeLimit) * 100;
+            totalProgressElement.style.width = `${Math.min(totalProgress, 100)}%`;
+        }
     }
     
     updateSourceDisplays() {

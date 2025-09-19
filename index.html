@@ -13,22 +13,9 @@
         <header class="header glass-card">
             <h1 class="text-gradient">📰 News Reading Timer</h1>
             <p>Limit your daily news consumption with intelligent time management</p>
-            <div class="status-indicator">
-                <span id="connection-status" class="status-offline">🟢 Online Mode</span>
-            </div>
         </header>
 
         <div class="timer-section glass-card">
-            <div class="main-timer-display">
-                <h3 class="text-gradient">Total Time Remaining</h3>
-                <div class="time-display">
-                    <span id="total-time-left" class="text-gradient">30:00</span>
-                </div>
-                <div class="progress-bar progress-enhanced">
-                    <div class="progress-fill" id="total-progress"></div>
-                </div>
-            </div>
-
             <div class="controls">
                 <button id="start-btn" class="btn btn-primary hover-lift">▶️ Start Timer</button>
                 <button id="pause-btn" class="btn btn-secondary hover-lift" disabled>⏸️ Pause</button>
@@ -172,6 +159,13 @@
 
         <div class="notification-section">
             <p id="notification" class="notification hidden"></p>
+        </div>
+    </div>
+
+    <!-- Status Footer -->
+    <div class="status-footer">
+        <div class="status-indicator">
+            <span id="connection-status" class="status-offline">🟢 Online Mode</span>
         </div>
     </div>
 
