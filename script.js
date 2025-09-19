@@ -87,7 +87,7 @@ class NewsTimer {
                         } else {
                             // Update existing source with favicon if URL is available
                             if (source.url) {
-                                this.updateSourceIcon(source.key, source.url);
+                                this.updateSourceIcon(source.key, source.url, source.favicon_url);
                             }
                         }
                     }
@@ -1237,11 +1237,12 @@ class NewsTimer {
     }
     
     // Update source icon with favicon
-    async updateSourceIcon(sourceKey, url) {
+    async updateSourceIcon(sourceKey, url, storedFaviconUrl = null) {
         const sourceIcon = document.querySelector(`.source-card[data-source="${sourceKey}"] .source-icon`);
         if (!sourceIcon) return;
         
-        const faviconUrl = this.getFaviconUrl(url);
+        // Use stored favicon URL if available, otherwise generate one
+        const faviconUrl = storedFaviconUrl || this.getFaviconUrl(url);
         if (faviconUrl) {
             // Create an image element to test if favicon loads
             const img = new Image();
@@ -1253,8 +1254,10 @@ class NewsTimer {
             };
             
             img.onerror = () => {
-                // Try alternative favicon service
-                this.tryAlternativeFavicon(sourceKey, url, sourceIcon);
+                // Try alternative favicon service if no stored URL
+                if (!storedFaviconUrl) {
+                    this.tryAlternativeFavicon(sourceKey, url, sourceIcon);
+                }
             };
             
             img.src = faviconUrl;

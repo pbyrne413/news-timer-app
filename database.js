@@ -67,6 +67,19 @@ class Database {
         }
       }
 
+      // Add favicon_url column to existing table if it doesn't exist
+      try {
+        await this.client.execute(`
+          ALTER TABLE news_sources ADD COLUMN favicon_url TEXT
+        `);
+        log.info('Added favicon_url column to news_sources table');
+      } catch (error) {
+        // Column already exists, ignore error
+        if (!error.message.includes('duplicate column name')) {
+          log.warn('Error adding favicon_url column:', error.message);
+        }
+      }
+
     // Create daily_usages table
     await this.client.execute(`
       CREATE TABLE IF NOT EXISTS daily_usages (
@@ -166,11 +179,11 @@ class Database {
     return result.rows[0] || null;
   }
 
-  async addSource(key, name, icon, url, allocation) {
+  async addSource(key, name, icon, url, favicon_url, allocation) {
     await this.ensureInitialized();
     const result = await this.client.execute({
-      sql: 'INSERT INTO news_sources (key, name, icon, url, default_allocation) VALUES (?, ?, ?, ?, ?)',
-      args: [key, name, icon, url, allocation]
+      sql: 'INSERT INTO news_sources (key, name, icon, url, favicon_url, default_allocation) VALUES (?, ?, ?, ?, ?, ?)',
+      args: [key, name, icon, url, favicon_url, allocation]
     });
     return result.lastInsertRowid;
   }

@@ -136,8 +136,8 @@ body::before {
   transition: all var(--transition-normal);
   position: relative;
   overflow: hidden;
-  padding: var(--space-2xl);
-  margin-bottom: var(--space-xl);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-md);
 }
 
 .glass-card::before {
@@ -186,9 +186,9 @@ body::before {
 /* Enhanced Header */
 .header {
   text-align: center;
-  margin-bottom: var(--space-3xl);
+  margin-bottom: var(--space-lg);
   position: relative;
-  padding: var(--space-xl) 0;
+  padding: var(--space-md) 0;
 }
 
 .header h1 {
@@ -568,6 +568,11 @@ body::before {
   margin-bottom: var(--space-sm);
   color: var(--text-primary);
   letter-spacing: -0.01em;
+  height: 2.4em; /* Fixed height for 2 lines */
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .source-info p {

@@ -28,7 +28,7 @@ export class SourceService extends BaseService {
   // Add new source with business validation
   async addSource(sourceData) {
     return this.executeWithConnection(async () => {
-      const { name, icon = '📰', url, allocation = config.businessRules.defaultAllocation } = sourceData;
+      const { name, icon = '📰', url, favicon_url, allocation = config.businessRules.defaultAllocation } = sourceData;
       
       const key = this._generateSourceKey(name);
       
@@ -48,7 +48,7 @@ export class SourceService extends BaseService {
         throw new AppError('Invalid URL format', 400);
       }
       
-      const sourceId = await this.db.addSource(key, name, icon, url, allocation);
+      const sourceId = await this.db.addSource(key, name, icon, url, favicon_url, allocation);
       
       return {
         key,
@@ -113,6 +113,7 @@ export class SourceService extends BaseService {
       name: source.name,
       icon: source.icon,
       url: source.url,
+      favicon_url: source.favicon_url,
       allocated: source.default_allocation,
       used: usage ? usage.time_used : 0,
       sessions: usage ? usage.sessions : 0,
