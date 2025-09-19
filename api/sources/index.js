@@ -19,14 +19,27 @@ export default asyncHandler(async function handler(req, res) {
   // Parse JSON body for POST requests
   if (req.method === 'POST') {
     console.log('📝 Received POST request to /sources');
-    console.log('Request body (raw):', req.body);
+    console.log('Request headers:', req.headers);
+    
+    // Get raw body from request
+    const rawBody = await new Promise((resolve) => {
+      let body = '';
+      req.on('data', chunk => {
+        body += chunk.toString();
+      });
+      req.on('end', () => {
+        resolve(body);
+      });
+    });
+    
+    console.log('Raw body received:', rawBody);
     
     try {
-      req.body = JSON.parse(req.body);
+      req.body = JSON.parse(rawBody);
       console.log('Parsed request body:', req.body);
     } catch (error) {
       console.error('Failed to parse request body:', error);
-      console.error('Raw body was:', req.body);
+      console.error('Raw body was:', rawBody);
       res.status(400).json({ error: 'Invalid JSON body' });
       return;
     }
