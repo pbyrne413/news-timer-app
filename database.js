@@ -31,8 +31,19 @@ class Database {
     
     this._initializing = true;
     try {
-      await this.initializeTables();
+      console.log('🔄 Database initialization starting...');
+      // Add timeout to prevent hanging
+      await Promise.race([
+        this.initializeTables(),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Database initialization timeout')), 10000)
+        )
+      ]);
       this._initialized = true;
+      console.log('✅ Database initialization completed');
+    } catch (error) {
+      console.error('❌ Database initialization failed:', error);
+      throw error;
     } finally {
       this._initializing = false;
     }
@@ -151,11 +162,22 @@ class Database {
   }
 
   async addSource(key, name, icon, url, favicon_url, allocation) {
+    console.log('📝 Database.addSource called with:', { key, name, icon, url, favicon_url, allocation });
+    
     await this.ensureInitialized();
-    const result = await this.client.execute({
-      sql: 'INSERT INTO news_sources (key, name, icon, url, favicon_url, default_allocation) VALUES (?, ?, ?, ?, ?, ?)',
-      args: [key, name, icon, url, favicon_url, allocation]
-    });
+    
+    console.log('🚀 Executing INSERT query...');
+    const result = await Promise.race([
+      this.client.execute({
+        sql: 'INSERT INTO news_sources (key, name, icon, url, favicon_url, default_allocation) VALUES (?, ?, ?, ?, ?, ?)',
+        args: [key, name, icon, url, favicon_url, allocation]
+      }),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Database query timeout')), 10000)
+      )
+    ]);
+    
+    console.log('✅ INSERT query completed, lastInsertRowid:', result.lastInsertRowid);
     return result.lastInsertRowid;
   }
 
