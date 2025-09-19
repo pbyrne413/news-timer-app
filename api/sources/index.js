@@ -16,6 +16,22 @@ export default asyncHandler(async function handler(req, res) {
     return;
   }
 
+  // Parse JSON body for POST requests
+  if (req.method === 'POST') {
+    console.log('📝 Received POST request to /sources');
+    console.log('Request body (raw):', req.body);
+    
+    try {
+      req.body = JSON.parse(req.body);
+      console.log('Parsed request body:', req.body);
+    } catch (error) {
+      console.error('Failed to parse request body:', error);
+      console.error('Raw body was:', req.body);
+      res.status(400).json({ error: 'Invalid JSON body' });
+      return;
+    }
+  }
+
   // Skip rate limiting for now to test if that's causing the issue
   // rateLimit(req, res, () => {});
 
