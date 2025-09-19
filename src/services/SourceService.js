@@ -27,7 +27,10 @@ export class SourceService extends BaseService {
 
   // Add new source with business validation
   async addSource(sourceData) {
+    // Use longer timeout for source addition (7 seconds)
     return this.executeWithConnection(async () => {
+      const startTime = Date.now();
+      console.log('📝 Adding new source:', sourceData);
       const { name, icon = '📰', url, favicon_url, allocation = config.businessRules.defaultAllocation } = sourceData;
       
       const key = this._generateSourceKey(name);
@@ -50,7 +53,7 @@ export class SourceService extends BaseService {
       
       const sourceId = await this.db.addSource(key, name, icon, url, favicon_url, allocation);
       
-      return {
+      const result = {
         key,
         name,
         icon,
@@ -60,6 +63,9 @@ export class SourceService extends BaseService {
         sessions: 0,
         overrunTime: 0
       };
+      
+      console.log(`✅ Source added in ${Date.now() - startTime}ms:`, result);
+      return result;
     });
   }
 

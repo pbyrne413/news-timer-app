@@ -10,10 +10,30 @@ export class BaseService {
   }
 
   // Template method for database operations with connection management
-  async executeWithConnection(operation) {
-    await this.db.ensureInitialized();
+  async executeWithConnection(operation, timeoutMs = 5000) {
+    const startTime = Date.now();
+    console.log('🔄 Starting database operation');
+
     try {
-      return await operation();
+      // Initialize with timeout
+      await Promise.race([
+        this.db.ensureInitialized(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Database initialization timeout')), 3000))
+      ]);
+
+      // Execute operation with timeout
+      const result = await Promise.race([
+        operation(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Database operation timeout')), timeoutMs))
+      ]);
+
+      const duration = Date.now() - startTime;
+      console.log(`✅ Database operation completed in ${duration}ms`);
+      return result;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      console.error(`❌ Database operation failed after ${duration}ms:`, error);
+      throw error;
     } finally {
       // Database connection cleanup handled by Database class
     }
