@@ -121,38 +121,9 @@ class Database {
     if (existingSources.rows[0].count > 0) return;
 
     // SECURITY: Validate default data to prevent injection
-    const validateDefaultSource = (source) => {
-      if (!source.key || typeof source.key !== 'string' || source.key.length > 50) {
-        throw new Error('Invalid source key');
-      }
-      if (!source.name || typeof source.name !== 'string' || source.name.length > 100) {
-        throw new Error('Invalid source name');
-      }
-      if (!source.icon || typeof source.icon !== 'string' || source.icon.length > 10) {
-        throw new Error('Invalid source icon');
-      }
-      if (!Number.isInteger(source.defaultAllocation) || source.defaultAllocation < 60 || source.defaultAllocation > 3600) {
-        throw new Error('Invalid default allocation');
-      }
-      return source;
-    };
+    // No default sources to validate - app starts empty
 
-    // Create default news sources with validation
-    const defaultSources = [
-      { key: 'bbc-football', name: 'BBC Football', icon: '⚽', defaultAllocation: 300 },
-      { key: 'bbc-headlines', name: 'BBC Headlines', icon: '📰', defaultAllocation: 300 },
-      { key: 'rte-headlines', name: 'RTE Headlines', icon: '📺', defaultAllocation: 300 },
-      { key: 'guardian-headlines', name: 'Guardian Headlines', icon: '📰', defaultAllocation: 300 },
-      { key: 'guardian-opinion', name: 'Guardian Opinion', icon: '💭', defaultAllocation: 300 },
-      { key: 'cnn', name: 'CNN', icon: '🌍', defaultAllocation: 300 }
-    ].map(validateDefaultSource);
-
-    for (const sourceData of defaultSources) {
-      await this.client.execute({
-        sql: 'INSERT INTO news_sources (key, name, icon, default_allocation) VALUES (?, ?, ?, ?)',
-        args: [sourceData.key, sourceData.name, sourceData.icon, sourceData.defaultAllocation]
-      });
-    }
+    // No default sources - app starts completely empty for user customization
 
     // Create default user settings
     await this.client.execute({
