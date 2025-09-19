@@ -136,8 +136,8 @@ body::before {
   transition: all var(--transition-normal);
   position: relative;
   overflow: hidden;
-  padding: var(--space-lg);
-  margin-bottom: var(--space-md);
+  padding: var(--space-md);
+  margin-bottom: var(--space-sm);
 }
 
 .glass-card::before {
@@ -186,9 +186,9 @@ body::before {
 /* Enhanced Header */
 .header {
   text-align: center;
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--space-sm);
   position: relative;
-  padding: var(--space-md) 0;
+  padding: var(--space-sm) 0;
 }
 
 .header h1 {
@@ -358,7 +358,7 @@ body::before {
   gap: var(--space-md);
   justify-content: center;
   flex-wrap: wrap;
-  margin-top: var(--space-xl);
+  margin-top: var(--space-sm);
 }
 
 .btn::before {

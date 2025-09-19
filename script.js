@@ -911,6 +911,13 @@ class NewsTimer {
     }
     
     openMathChallenge() {
+        // Check if we have fewer than 6 sources - if so, skip the challenge
+        const sourceCount = Object.keys(this.sourceTimers).length;
+        if (sourceCount < 6) {
+            this.openAddSourceModal();
+            return;
+        }
+        
         this.generateMathChallenge();
         this.mathChallengeModal.classList.remove('hidden');
     }
