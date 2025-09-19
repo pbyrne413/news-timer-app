@@ -1446,7 +1446,5 @@ class NewsTimer {
 
 // Initialize the timer when the page loads
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize API service
-    window.apiService = new ApiService();
     window.newsTimer = new NewsTimer();
 });
