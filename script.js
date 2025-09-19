@@ -1101,16 +1101,8 @@ class NewsTimer {
             sourceHeader.appendChild(progressUrl);
         }
         
-        // Add delete button
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'delete-source-btn';
-        deleteBtn.innerHTML = '🗑️';
-        deleteBtn.title = 'Delete source';
-        deleteBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent source selection
-            this.deleteSource(sanitizedSourceKey);
-        });
-        sourceHeader.appendChild(deleteBtn);
+        // Delete button only in settings modal, not on main screen
+        // (This will be handled in populateAllocationGrid)
         
         const progressBar = document.createElement('div');
         progressBar.className = 'progress-bar progress-enhanced';
@@ -1241,8 +1233,8 @@ class NewsTimer {
         
         try {
             const domain = new URL(url).hostname;
-            // Use a more reliable favicon service that handles CORS better
-            return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+            // Use DuckDuckGo favicon service which has better CORS support
+            return `https://icons.duckduckgo.com/ip3/${domain}.ico`;
         } catch (error) {
             console.warn('Invalid URL for favicon:', url);
             return null;
