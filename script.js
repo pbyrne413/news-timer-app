@@ -308,12 +308,26 @@ class NewsTimer {
         
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
+            // Space to start/pause timer (not in input fields)
             if (e.code === 'Space' && !e.target.matches('input, textarea')) {
                 e.preventDefault();
                 if (this.isRunning) {
                     this.pause();
                 } else {
                     this.start();
+                }
+            }
+            
+            // Escape to close modals
+            if (e.code === 'Escape') {
+                if (!this.settingsModal.classList.contains('hidden')) {
+                    this.closeSettingsModal();
+                }
+                if (!this.mathChallengeModal.classList.contains('hidden')) {
+                    this.closeMathChallenge();
+                }
+                if (!this.addSourceModal.classList.contains('hidden')) {
+                    this.closeAddSourceModal();
                 }
             }
         });
@@ -775,8 +789,7 @@ class NewsTimer {
     }
     
     openSettingsModal() {
-        this.loadSettingsIntoModal();
-        this.populateAllocationGrid();
+        this.loadSettingsIntoModal(); // This already includes allocation grid population
         this.settingsModal.classList.remove('hidden');
     }
     
