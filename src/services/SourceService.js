@@ -91,11 +91,8 @@ export class SourceService extends BaseService {
         throw new AppError('Source not found', 404);
       }
 
-      // Business rule: Prevent deletion of default sources
-      const defaultSources = ['bbc-football', 'bbc-headlines', 'rte-headlines', 'guardian-headlines', 'guardian-opinion', 'cnn'];
-      if (defaultSources.includes(sourceKey)) {
-        throw new AppError('Cannot delete default sources', 400);
-      }
+      // Business rule: Allow deletion of all sources since we're now fully dynamic
+      // No default sources to protect
 
       await this.db.deleteSource(source.id);
       return { success: true };

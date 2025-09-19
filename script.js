@@ -163,15 +163,8 @@ class NewsTimer {
     }
     
     initializeDefaultData() {
-        // Fallback default data if API fails
-        this.sourceTimers = {
-            'bbc-football': { allocated: 5 * 60, used: 0, sessions: 0, overrunTime: 0 },
-            'bbc-headlines': { allocated: 5 * 60, used: 0, sessions: 0, overrunTime: 0 },
-            'rte-headlines': { allocated: 5 * 60, used: 0, sessions: 0, overrunTime: 0 },
-            'guardian-headlines': { allocated: 5 * 60, used: 0, sessions: 0, overrunTime: 0 },
-            'guardian-opinion': { allocated: 5 * 60, used: 0, sessions: 0, overrunTime: 0 },
-            'cnn': { allocated: 5 * 60, used: 0, sessions: 0, overrunTime: 0 }
-        };
+        // Start with empty source timers - all sources come from database
+        this.sourceTimers = {};
         this.updateDisplay();
     }
     
@@ -797,15 +790,11 @@ class NewsTimer {
             const sourceName = progressItem ? progressItem.querySelector('.source-info h3').textContent : source;
             const sourceIcon = progressItem ? progressItem.querySelector('.source-icon').textContent : '📰';
             
-            // Check if this is a default source (no delete button)
-            const defaultSources = ['bbc-football', 'bbc-headlines', 'rte-headlines', 'guardian-headlines', 'guardian-opinion', 'cnn'];
-            const isDefaultSource = defaultSources.includes(source);
-            
             allocationItem.innerHTML = `
                 <label for="${source}-alloc">${sourceIcon} ${sourceName}:</label>
                 <input type="number" id="${source}-alloc" value="${Math.floor(sourceData.allocated / 60)}" min="0" max="30" data-source="${source}">
                 <span>minutes</span>
-                ${!isDefaultSource ? `<button class="btn-delete-source" data-source="${source}" title="Delete source">🗑️</button>` : ''}
+                <button class="btn-delete-source" data-source="${source}" title="Delete source">🗑️</button>
             `;
             
             allocationGrid.appendChild(allocationItem);
