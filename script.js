@@ -321,13 +321,13 @@ class NewsTimer {
         // Remove active class from all sources
         Object.keys(this.progressItems).forEach(s => {
             if (this.progressItems[s]) {
-                this.progressItems[s].classList.remove('active');
+                this.progressItems[s].classList.remove('active', 'selected');
             }
         });
         
         // Add active class to selected source
         if (this.progressItems[source]) {
-            this.progressItems[source].classList.add('active');
+            this.progressItems[source].classList.add('active', 'selected');
         }
         this.currentSource = source;
         
@@ -431,7 +431,8 @@ class NewsTimer {
             this.sourceTimers[source].sessions = 0;
             this.sourceTimers[source].overrunTime = 0;
             if (this.progressItems[source]) {
-                this.progressItems[source].classList.remove('active', 'completed', 'overrun');
+                this.progressItems[source].classList.remove('active', 'completed', 'overrun', 'selected');
+                this.removeOverrunCounter(source);
             }
         });
         
@@ -583,15 +584,24 @@ class NewsTimer {
                 this.progressItems[source].classList.remove('completed');
                 this.progressItems[source].classList.add('overrun');
                 this.sourceProgressElements[source].style.background = '#dc3545'; // Red
+                
+                // Add or update overrun counter
+                this.addOverrunCounter(source, sourceData.used - sourceData.allocated);
             } else if (sourceData.used >= sourceData.allocated) {
                 // Source exactly at allocated time - show as completed
                 this.progressItems[source].classList.add('completed');
                 this.progressItems[source].classList.remove('overrun');
                 this.sourceProgressElements[source].style.background = '#28a745'; // Green
+                
+                // Remove overrun counter
+                this.removeOverrunCounter(source);
             } else {
                 // Source under allocated time - normal state
                 this.progressItems[source].classList.remove('completed', 'overrun');
                 this.sourceProgressElements[source].style.background = 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)'; // Default blue
+                
+                // Remove overrun counter
+                this.removeOverrunCounter(source);
             }
         });
     }
@@ -1213,8 +1223,13 @@ class NewsTimer {
         
         try {
             const domain = new URL(url).hostname;
-            // Use Google's favicon service for better reliability
-            return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+            // Try multiple favicon services for better reliability
+            const faviconServices = [
+                `https://www.google.com/s2/favicons?domain=${domain}&sz=32`,
+                `https://favicons.githubusercontent.com/${domain}`,
+                `https://icons.duckduckgo.com/ip3/${domain}.ico`
+            ];
+            return faviconServices[0]; // Start with Google's service
         } catch (error) {
             console.warn('Invalid URL for favicon:', url);
             return null;
@@ -1230,15 +1245,67 @@ class NewsTimer {
         if (faviconUrl) {
             // Create an image element to test if favicon loads
             const img = new Image();
+            img.crossOrigin = 'anonymous'; // Try to handle CORS
+            
             img.onload = () => {
                 // Replace emoji with favicon image
-                sourceIcon.innerHTML = `<img src="${faviconUrl}" alt="favicon" style="width: 24px; height: 24px; border-radius: 4px;">`;
+                sourceIcon.innerHTML = `<img src="${faviconUrl}" alt="favicon" style="width: 32px; height: 32px; border-radius: 4px; background: white; padding: 2px;">`;
+            };
+            
+            img.onerror = () => {
+                // Try alternative favicon service
+                this.tryAlternativeFavicon(sourceKey, url, sourceIcon);
+            };
+            
+            img.src = faviconUrl;
+        }
+    }
+    
+    // Try alternative favicon services
+    tryAlternativeFavicon(sourceKey, url, sourceIcon) {
+        try {
+            const domain = new URL(url).hostname;
+            const alternativeUrl = `https://icons.duckduckgo.com/ip3/${domain}.ico`;
+            
+            const img = new Image();
+            img.onload = () => {
+                sourceIcon.innerHTML = `<img src="${alternativeUrl}" alt="favicon" style="width: 32px; height: 32px; border-radius: 4px; background: white; padding: 2px;">`;
             };
             img.onerror = () => {
-                // Keep original emoji if favicon fails to load
-                console.warn('Failed to load favicon for:', url);
+                console.warn('All favicon services failed for:', url);
+                // Keep original emoji
             };
-            img.src = faviconUrl;
+            img.src = alternativeUrl;
+        } catch (error) {
+            console.warn('Failed to try alternative favicon for:', url);
+        }
+    }
+    
+    // Add overrun counter to source card
+    addOverrunCounter(sourceKey, overrunSeconds) {
+        const sourceCard = document.querySelector(`.source-card[data-source="${sourceKey}"]`);
+        if (!sourceCard) return;
+        
+        // Remove existing counter
+        this.removeOverrunCounter(sourceKey);
+        
+        // Create new counter
+        const counter = document.createElement('div');
+        counter.className = 'overrun-counter';
+        counter.textContent = Math.ceil(overrunSeconds / 60); // Show minutes overrun
+        counter.title = `${Math.ceil(overrunSeconds / 60)} minutes over limit`;
+        
+        sourceCard.appendChild(counter);
+    }
+    
+    // Remove overrun counter from source card
+    removeOverrunCounter(sourceKey) {
+        const sourceCard = document.querySelector(`.source-card[data-source="${sourceKey}"]`);
+        if (!sourceCard) return;
+        
+        const existingCounter = sourceCard.querySelector('.overrun-counter');
+        if (existingCounter) {
+            existingCounter.remove();
         }
     }
     
