@@ -1399,8 +1399,7 @@ class NewsTimer {
             allocationGrid.appendChild(allocationItem);
         });
         
-        // Set up event listeners for allocation changes
-        this.initializeAllocationElements();
+        // Event listeners are set up in the populateAllocationGrid function above
     }
     
     updateConnectionStatus(isOnline) {
