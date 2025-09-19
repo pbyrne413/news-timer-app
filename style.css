@@ -469,30 +469,31 @@ body::before {
 
 .source-header {
   display: flex;
-  align-items: center;
-  gap: var(--space-lg);
-  margin-bottom: var(--space-xl);
+  align-items: flex-start;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
 }
 
 .source-icon {
-  font-size: 2.5rem;
-  width: 72px;
-  height: 72px;
+  font-size: 2rem;
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all var(--transition-normal);
   position: relative;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .source-icon img {
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   border-radius: var(--radius-sm);
   object-fit: contain;
   background: white;
-  padding: 4px;
+  padding: 2px;
 }
 
 .source-icon::before {
@@ -573,6 +574,7 @@ body::before {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+  min-width: 200px; /* Support up to 25 characters */
 }
 
 .source-info p {
@@ -580,6 +582,14 @@ body::before {
   font-size: var(--text-sm);
   font-weight: 500;
   line-height: 1.5;
+}
+
+.progress-time {
+  text-align: center;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-top: var(--space-sm);
 }
 
 /* Enhanced Stats Grid */

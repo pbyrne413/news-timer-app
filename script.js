@@ -1081,7 +1081,7 @@ class NewsTimer {
         sourceTitle.textContent = sanitizedSourceName;
         
         const sourceDescription = document.createElement('p');
-        sourceDescription.textContent = 'News source';
+        sourceDescription.textContent = this.generateSourceDescription(sourceName, sourceUrl);
         
         sourceInfo.appendChild(sourceTitle);
         sourceInfo.appendChild(sourceDescription);
@@ -1257,7 +1257,7 @@ class NewsTimer {
             
             img.onload = () => {
                 // Replace emoji with favicon image
-                sourceIcon.innerHTML = `<img src="${faviconUrl}" alt="favicon" style="width: 32px; height: 32px; border-radius: 4px; background: white; padding: 2px;">`;
+                sourceIcon.innerHTML = `<img src="${faviconUrl}" alt="favicon" style="width: 24px; height: 24px; border-radius: 4px; background: white; padding: 2px;">`;
             };
             
             img.onerror = () => {
@@ -1279,7 +1279,7 @@ class NewsTimer {
             
             const img = new Image();
             img.onload = () => {
-                sourceIcon.innerHTML = `<img src="${alternativeUrl}" alt="favicon" style="width: 32px; height: 32px; border-radius: 4px; background: white; padding: 2px;">`;
+                sourceIcon.innerHTML = `<img src="${alternativeUrl}" alt="favicon" style="width: 24px; height: 24px; border-radius: 4px; background: white; padding: 2px;">`;
             };
             img.onerror = () => {
                 console.warn('All favicon services failed for:', url);
@@ -1316,6 +1316,40 @@ class NewsTimer {
         const existingCounter = sourceCard.querySelector('.overrun-counter');
         if (existingCounter) {
             existingCounter.remove();
+        }
+    }
+    
+    // Generate appropriate description for source
+    generateSourceDescription(sourceName, sourceUrl) {
+        if (!sourceUrl) {
+            return 'News source';
+        }
+        
+        try {
+            const domain = new URL(sourceUrl).hostname.toLowerCase();
+            
+            // Generate descriptions based on domain or source name
+            if (domain.includes('bbc')) {
+                return 'British Broadcasting Corporation';
+            } else if (domain.includes('guardian')) {
+                return 'Independent journalism and analysis';
+            } else if (domain.includes('cnn')) {
+                return 'Global news and breaking stories';
+            } else if (domain.includes('reuters')) {
+                return 'International news and analysis';
+            } else if (domain.includes('rte')) {
+                return 'Irish news and current events';
+            } else if (domain.includes('sport') || sourceName.toLowerCase().includes('sport')) {
+                return 'Sports news and updates';
+            } else if (sourceName.toLowerCase().includes('opinion')) {
+                return 'Commentary and opinion pieces';
+            } else if (sourceName.toLowerCase().includes('headlines')) {
+                return 'Breaking news and current affairs';
+            } else {
+                return 'News and information';
+            }
+        } catch (error) {
+            return 'News source';
         }
     }
     
