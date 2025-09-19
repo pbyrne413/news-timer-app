@@ -158,23 +158,37 @@ class Database {
   }
 
   async addSource(key, name, icon, url, favicon_url, allocation) {
+    const startTime = Date.now();
     console.log('📝 Database.addSource called with:', { key, name, icon, url, favicon_url, allocation });
     
     await this.ensureInitialized();
     
     console.log('🚀 Executing INSERT query...');
-    const result = await Promise.race([
-      this.client.execute({
-        sql: 'INSERT INTO news_sources (key, name, icon, url, favicon_url, default_allocation) VALUES (?, ?, ?, ?, ?, ?)',
-        args: [key, name, icon, url, favicon_url, allocation]
-      }),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Database query timeout')), 10000)
-      )
-    ]);
-    
-    console.log('✅ INSERT query completed, lastInsertRowid:', result.lastInsertRowid);
-    return result.lastInsertRowid;
+    try {
+      const result = await Promise.race([
+        this.client.execute({
+          sql: 'INSERT INTO news_sources (key, name, icon, url, favicon_url, default_allocation) VALUES (?, ?, ?, ?, ?, ?)',
+          args: [key, name, icon, url, favicon_url, allocation]
+        }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Database query timeout')), 10000)
+        )
+      ]);
+      
+      const duration = Date.now() - startTime;
+      console.log('✅ INSERT query completed, lastInsertRowid:', result.lastInsertRowid, `(${duration}ms)`);
+      
+      // Track performance
+      if (duration > 3000) {
+        console.warn('⚠️ Slow database operation detected:', { operation: 'addSource', duration: `${duration}ms` });
+      }
+      
+      return result.lastInsertRowid;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      console.error('❌ Database.addSource failed:', error.message, `(${duration}ms)`);
+      throw error;
+    }
   }
 
   async updateSourceAllocation(key, allocation) {

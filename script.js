@@ -41,11 +41,22 @@ class NewsTimer {
     }
     
     async loadDataFromAPI() {
+        const startTime = Date.now();
         try {
-            // Load sources and settings from API
+            // Load sources and settings from API with timeout
             const [sources, settings] = await Promise.all([
-                window.apiService.getSources(),
-                window.apiService.getSettings()
+                Promise.race([
+                    window.apiService.getSources(),
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Sources request timeout')), 15000)
+                    )
+                ]),
+                Promise.race([
+                    window.apiService.getSettings(),
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Settings request timeout')), 10000)
+                    )
+                ])
             ]);
             
             // Update source timers from API data
@@ -113,7 +124,10 @@ class NewsTimer {
             // Mark as online mode
             this.isOnlineMode = true;
             this.updateConnectionStatus(true);
-            this.showNotification('Connected to server. Data will be saved remotely.', 'success');
+            
+            const loadTime = Date.now() - startTime;
+            console.log(`✅ Data loaded from API in ${loadTime}ms`);
+            this.showNotification(`Connected to server. Data loaded in ${loadTime}ms.`, 'success');
             
         } catch (error) {
             console.error('Failed to load data from API:', error);
