@@ -17,10 +17,28 @@ export default async function handler(req, res) {
 
     try {
       const domain = new URL(url).hostname;
-      const faviconUrl = `https://icons.duckduckgo.com/ip3/${domain}.ico`;
-
-      // Fetch the favicon
-      const response = await fetch(faviconUrl);
+      
+      // Try multiple favicon services in order
+      const faviconUrls = [
+        `https://www.google.com/s2/favicons?domain=${domain}&sz=32`, // Google (most reliable)
+        `https://icons.duckduckgo.com/ip3/${domain}.ico`,           // DuckDuckGo (good fallback)
+        `https://icon.horse/icon/${domain}`                         // Icon Horse (another option)
+      ];
+      
+      let response;
+      for (const faviconUrl of faviconUrls) {
+        try {
+          response = await fetch(faviconUrl);
+          if (response.ok) break;
+        } catch (error) {
+          console.warn(`Failed to fetch favicon from ${faviconUrl}:`, error);
+        }
+      }
+      
+      // If all services failed, use a default favicon
+      if (!response?.ok) {
+        return res.redirect('/favicon.ico');
+      }
       if (!response.ok) {
         throw new Error(`Failed to fetch favicon: ${response.status}`);
       }

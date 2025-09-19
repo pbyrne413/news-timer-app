@@ -1285,34 +1285,17 @@ class NewsTimer {
             };
             
             img.onerror = () => {
-                // Try alternative favicon service if no stored URL
-                if (!storedFaviconUrl) {
-                    this.tryAlternativeFavicon(sourceKey, url, sourceIcon);
-                }
+                this.handleFaviconError(sourceKey, url, sourceIcon);
             };
             
             img.src = faviconUrl;
         }
     }
     
-    // Try alternative favicon services
-    tryAlternativeFavicon(sourceKey, url, sourceIcon) {
-        try {
-            const domain = new URL(url).hostname;
-            const alternativeUrl = `https://icons.duckduckgo.com/ip3/${domain}.ico`;
-            
-            const img = new Image();
-            img.onload = () => {
-                sourceIcon.innerHTML = `<img src="${alternativeUrl}" alt="favicon" style="width: 24px; height: 24px; border-radius: 4px; background: white; padding: 2px;">`;
-            };
-            img.onerror = () => {
-                console.warn('All favicon services failed for:', url);
-                // Keep original emoji
-            };
-            img.src = alternativeUrl;
-        } catch (error) {
-            console.warn('Failed to try alternative favicon for:', url);
-        }
+    // Keep original emoji if favicon fails
+    handleFaviconError(sourceKey, url, sourceIcon) {
+        console.warn('Favicon failed to load for:', url);
+        // Keep original emoji
     }
     
     // Add overrun counter to source card
