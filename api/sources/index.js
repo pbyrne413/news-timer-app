@@ -16,8 +16,8 @@ export default asyncHandler(async function handler(req, res) {
     return;
   }
 
-  // Apply rate limiting
-  rateLimit(req, res, () => {});
+  // Skip rate limiting for now to test if that's causing the issue
+  // rateLimit(req, res, () => {});
 
   // Initialize container if not already done
   await container.initialize();
@@ -28,14 +28,7 @@ export default asyncHandler(async function handler(req, res) {
   if (req.method === 'GET') {
     await sourceController.getSources(req, res);
   } else if (req.method === 'POST') {
-    // Apply validation middleware
-    await new Promise((resolve, reject) => {
-      validate('addSource')(req, res, (err) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
-
+    // Skip validation for now to test if that's causing the issue
     await sourceController.addSource(req, res);
   } else {
     res.setHeader('Allow', ['GET', 'POST']);
