@@ -162,9 +162,9 @@ class Database {
     return result.rows[0] || null;
   }
 
-  async addSource(key, name, icon, url, favicon_url, allocation) {
+  async addSource(key, name, icon, url, allocation) {
     const startTime = Date.now();
-    console.log('📝 Database.addSource called with:', { key, name, icon, url, favicon_url, allocation });
+    console.log('📝 Database.addSource called with:', { key, name, icon, url, allocation });
     
     await this.ensureInitialized();
     
@@ -172,8 +172,8 @@ class Database {
     try {
       const result = await Promise.race([
         this.client.execute({
-          sql: 'INSERT INTO news_sources (key, name, icon, url, favicon_url, default_allocation) VALUES (?, ?, ?, ?, ?, ?)',
-          args: [key, name, icon, url, favicon_url, allocation]
+          sql: 'INSERT INTO news_sources (key, name, icon, url, default_allocation) VALUES (?, ?, ?, ?, ?)',
+          args: [key, name, icon, url, allocation]
         }),
         new Promise((_, reject) => 
           setTimeout(() => reject(new Error('Database query timeout')), 10000)
