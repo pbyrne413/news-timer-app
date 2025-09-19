@@ -129,7 +129,7 @@ class Database {
   async initializeDefaultData() {
     // Clear old hardcoded sources to start fresh
     await this.client.execute('DELETE FROM news_sources');
-    await this.client.execute('DELETE FROM daily_usage');
+    await this.client.execute('DELETE FROM daily_usages');
     await this.client.execute('DELETE FROM user_settings');
 
     // Create default user settings
