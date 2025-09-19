@@ -127,18 +127,23 @@ class Database {
   }
 
   async initializeDefaultData() {
-    // Clear old hardcoded sources to start fresh
-    await this.client.execute('DELETE FROM news_sources');
-    await this.client.execute('DELETE FROM daily_usages');
-    await this.client.execute('DELETE FROM user_settings');
+    // Check if we already have data - only initialize if database is empty
+    const existingSources = await this.client.execute('SELECT COUNT(*) as count FROM news_sources');
+    const existingSettings = await this.client.execute('SELECT COUNT(*) as count FROM user_settings');
+    
+    // Only initialize if database is completely empty
+    if (existingSources.rows[0].count > 0 || existingSettings.rows[0].count > 0) {
+      log.info('Database already initialized, skipping default data creation');
+      return;
+    }
 
-    // Create default user settings
+    // Create default user settings for new database
     await this.client.execute({
       sql: 'INSERT INTO user_settings (total_time_limit, auto_start) VALUES (?, ?)',
       args: [1800, false]
     });
 
-    log.info('Default data initialized - database cleared and reset');
+    log.info('Default data initialized for new database');
   }
 
   // News Sources methods
