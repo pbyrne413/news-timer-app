@@ -751,6 +751,11 @@ class NewsTimer {
             // Update display
             this.updateDisplay();
             
+            // Update allocation grid if settings modal is open
+            if (!this.settingsModal.classList.contains('hidden')) {
+                this.populateAllocationGrid();
+            }
+            
             // Reload settings modal to update the allocation grid
             this.loadSettingsIntoModal();
             
@@ -764,6 +769,7 @@ class NewsTimer {
     
     openSettingsModal() {
         this.loadSettingsIntoModal();
+        this.populateAllocationGrid();
         this.settingsModal.classList.remove('hidden');
     }
     
@@ -1037,6 +1043,11 @@ class NewsTimer {
             // Redistribute time evenly
             await this.distributeTimeEvenly();
             
+            // Update allocation grid if settings modal is open
+            if (!this.settingsModal.classList.contains('hidden')) {
+                this.populateAllocationGrid();
+            }
+            
             this.closeAddSourceModal();
             this.showNotification(`New source "${name}" added! Time has been redistributed evenly.`, 'success');
         } catch (error) {
@@ -1100,6 +1111,17 @@ class NewsTimer {
             progressUrl.title = sourceUrl;
             sourceHeader.appendChild(progressUrl);
         }
+        
+        // Add delete button
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-source-btn';
+        deleteBtn.innerHTML = '🗑️';
+        deleteBtn.title = 'Delete source';
+        deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent source selection
+            this.deleteSource(sanitizedSourceKey);
+        });
+        sourceHeader.appendChild(deleteBtn);
         
         const progressBar = document.createElement('div');
         progressBar.className = 'progress-bar progress-enhanced';
@@ -1230,13 +1252,8 @@ class NewsTimer {
         
         try {
             const domain = new URL(url).hostname;
-            // Try multiple favicon services for better reliability
-            const faviconServices = [
-                `https://www.google.com/s2/favicons?domain=${domain}&sz=32`,
-                `https://favicons.githubusercontent.com/${domain}`,
-                `https://icons.duckduckgo.com/ip3/${domain}.ico`
-            ];
-            return faviconServices[0]; // Start with Google's service
+            // Use a more reliable favicon service that handles CORS better
+            return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
         } catch (error) {
             console.warn('Invalid URL for favicon:', url);
             return null;
@@ -1253,7 +1270,7 @@ class NewsTimer {
         if (faviconUrl) {
             // Create an image element to test if favicon loads
             const img = new Image();
-            img.crossOrigin = 'anonymous'; // Try to handle CORS
+            // Remove crossOrigin to avoid CORS issues
             
             img.onload = () => {
                 // Replace emoji with favicon image
@@ -1351,6 +1368,39 @@ class NewsTimer {
         } catch (error) {
             return 'News source';
         }
+    }
+    
+    // Populate allocation grid dynamically
+    populateAllocationGrid() {
+        const allocationGrid = document.querySelector('.allocation-grid');
+        if (!allocationGrid) return;
+        
+        // Clear existing allocation items
+        allocationGrid.innerHTML = '';
+        
+        // Add allocation items for each source
+        Object.keys(this.sourceTimers).forEach(sourceKey => {
+            const sourceData = this.sourceTimers[sourceKey];
+            const sourceCard = document.querySelector(`.source-card[data-source="${sourceKey}"]`);
+            if (!sourceCard) return;
+            
+            const sourceName = sourceCard.querySelector('h3').textContent;
+            const sourceIcon = sourceCard.querySelector('.source-icon').textContent;
+            
+            const allocationItem = document.createElement('div');
+            allocationItem.className = 'allocation-item';
+            
+            allocationItem.innerHTML = `
+                <label for="${sourceKey}-alloc">${sourceIcon} ${sourceName}:</label>
+                <input type="number" id="${sourceKey}-alloc" value="${Math.floor(sourceData.allocated / 60)}" min="0" max="30" data-source="${sourceKey}">
+                <span>minutes</span>
+            `;
+            
+            allocationGrid.appendChild(allocationItem);
+        });
+        
+        // Set up event listeners for allocation changes
+        this.initializeAllocationElements();
     }
     
     updateConnectionStatus(isOnline) {
