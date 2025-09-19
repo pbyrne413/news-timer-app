@@ -63,6 +63,11 @@ class NewsTimer {
                     // Create DOM elements for sources that don't exist in the HTML
                     if (!document.querySelector(`.source-card[data-source="${source.key}"]`)) {
                         this.addSourceToUI(source.key, source.name, source.url, source.icon);
+                    } else {
+                        // Update existing source with favicon if URL is available
+                        if (source.url) {
+                            this.updateSourceIcon(source.key, source.url);
+                        }
                     }
                 });
             } else {
@@ -79,6 +84,11 @@ class NewsTimer {
                         // Create DOM elements for sources that don't exist in the HTML
                         if (!document.querySelector(`.source-card[data-source="${source.key}"]`)) {
                             this.addSourceToUI(source.key, source.name, source.url, source.icon);
+                        } else {
+                            // Update existing source with favicon if URL is available
+                            if (source.url) {
+                                this.updateSourceIcon(source.key, source.url);
+                            }
                         }
                     }
                 });
@@ -1124,6 +1134,11 @@ class NewsTimer {
         // Re-initialize elements to include the new source
         this.initializeNewSourceElements(sourceKey);
         
+        // Update source icon with favicon if URL is available
+        if (sourceUrl) {
+            this.updateSourceIcon(sourceKey, sourceUrl);
+        }
+        
         // Update the display
         this.updateDisplay();
     }
@@ -1179,6 +1194,41 @@ class NewsTimer {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;')
             .replace(/\//g, '&#x2F;');
+    }
+    
+    // Get favicon URL for a given domain
+    getFaviconUrl(url) {
+        if (!url) return null;
+        
+        try {
+            const domain = new URL(url).hostname;
+            // Use Google's favicon service for better reliability
+            return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+        } catch (error) {
+            console.warn('Invalid URL for favicon:', url);
+            return null;
+        }
+    }
+    
+    // Update source icon with favicon
+    async updateSourceIcon(sourceKey, url) {
+        const sourceIcon = document.querySelector(`.source-card[data-source="${sourceKey}"] .source-icon`);
+        if (!sourceIcon) return;
+        
+        const faviconUrl = this.getFaviconUrl(url);
+        if (faviconUrl) {
+            // Create an image element to test if favicon loads
+            const img = new Image();
+            img.onload = () => {
+                // Replace emoji with favicon image
+                sourceIcon.innerHTML = `<img src="${faviconUrl}" alt="favicon" style="width: 24px; height: 24px; border-radius: 4px;">`;
+            };
+            img.onerror = () => {
+                // Keep original emoji if favicon fails to load
+                console.warn('Failed to load favicon for:', url);
+            };
+            img.src = faviconUrl;
+        }
     }
     
     updateConnectionStatus(isOnline) {
