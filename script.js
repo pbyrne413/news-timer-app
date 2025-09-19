@@ -1022,28 +1022,35 @@ class NewsTimer {
     }
     
     async submitAddSource() {
+        console.log('📝 submitAddSource called');
         const name = this.newSourceNameInput.value.trim();
         const icon = this.newSourceIconInput.value.trim() || '📰';
         const url = this.newSourceUrlInput.value.trim();
         const allocation = parseInt(this.newSourceAllocationInput.value) * 60; // Convert to seconds
         
+        console.log('Source data:', { name, icon, url, allocation });
+        
         if (!name) {
+            console.warn('❌ Source name empty');
             this.showNotification('Source name cannot be empty.', 'error');
             return;
         }
         
         if (url && !this.isValidUrl(url)) {
+            console.warn('❌ Invalid URL:', url);
             this.showNotification('Please enter a valid URL.', 'error');
             return;
         }
         
         try {
+            console.log('🚀 Calling API to add source...');
             const newSource = await window.apiService.addSource({
                 name,
                 icon,
                 url: url || undefined,
                 allocation
             });
+            console.log('✅ API response:', newSource);
             
             // Add to local sourceTimers
             this.sourceTimers[newSource.key] = {

@@ -14,8 +14,21 @@ export class SourceController extends BaseController {
 
   // POST /api/sources - Add new source
   addSource = this.createHandler(async (req, res) => {
-    const newSource = await this.sourceService.addSource(req.body);
-    this.sendSuccess(res, newSource, 201);
+    const log = this.container.get('logger').child({ method: 'addSource' });
+    log.info('Adding new source', { body: req.body });
+
+    try {
+      const newSource = await this.sourceService.addSource(req.body);
+      log.info('Source added successfully', { source: newSource });
+      this.sendSuccess(res, newSource, 201);
+    } catch (error) {
+      log.error('Failed to add source', { 
+        error: error.message,
+        stack: error.stack,
+        body: req.body 
+      });
+      throw error;
+    }
   });
 
   // Combined handler for both GET and POST

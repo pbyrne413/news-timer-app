@@ -6,6 +6,12 @@ class ApiService {
 
   async request(endpoint, options = {}) {
     const url = `${this.baseUrl}${endpoint}`;
+    console.log(`🌐 API Request to ${endpoint}`, { 
+      method: options.method || 'GET',
+      headers: options.headers,
+      body: options.body 
+    });
+
     const config = {
       headers: {
         'Content-Type': 'application/json',
@@ -19,15 +25,34 @@ class ApiService {
     }
 
     try {
+      const startTime = Date.now();
       const response = await fetch(url, config);
+      const duration = Date.now() - startTime;
+      
+      console.log(`⏱️ API Response from ${endpoint} (${duration}ms)`, { 
+        status: response.status,
+        ok: response.ok,
+        statusText: response.statusText
+      });
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error(`❌ API Error from ${endpoint}:`, {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText
+        });
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
       }
       
-      return await response.json();
+      const data = await response.json();
+      console.log(`✅ API Success from ${endpoint}:`, data);
+      return data;
     } catch (error) {
-      console.error('API request failed:', error);
+      console.error(`❌ API Request to ${endpoint} failed:`, {
+        error: error.message,
+        stack: error.stack
+      });
       throw error;
     }
   }
