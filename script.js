@@ -1246,9 +1246,8 @@ class NewsTimer {
         if (!url) return null;
         
         try {
-            const domain = new URL(url).hostname;
-            // Use DuckDuckGo favicon service which has better CORS support
-            return `https://icons.duckduckgo.com/ip3/${domain}.ico`;
+            // Use our proxy endpoint which handles CORS and caching
+            return `/api/favicon?url=${encodeURIComponent(url)}`;
         } catch (error) {
             console.warn('Invalid URL for favicon:', url);
             return null;
