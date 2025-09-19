@@ -1028,7 +1028,10 @@ class NewsTimer {
         const url = this.newSourceUrlInput.value.trim();
         const allocation = parseInt(this.newSourceAllocationInput.value) * 60; // Convert to seconds
         
-        console.log('Source data:', { name, icon, url, allocation });
+        // Generate favicon URL if we have a URL
+        const favicon_url = url ? this.getFaviconUrl(url) : null;
+        
+        console.log('Source data:', { name, icon, url, favicon_url, allocation });
         
         if (!name) {
             console.warn('❌ Source name empty');
@@ -1048,6 +1051,7 @@ class NewsTimer {
                 name,
                 icon,
                 url: url || undefined,
+                favicon_url: favicon_url || undefined,
                 allocation
             });
             console.log('✅ API response:', newSource);
