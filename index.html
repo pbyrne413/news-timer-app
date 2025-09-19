@@ -10,65 +10,67 @@
 
 <body>
     <div class="container">
-        <header>
-            <h1>📰 News Reading Timer</h1>
-            <p>Limit your daily news consumption</p>
+        <header class="header glass-card">
+            <h1 class="text-gradient">📰 News Reading Timer</h1>
+            <p>Limit your daily news consumption with intelligent time management</p>
             <div class="status-indicator">
                 <span id="connection-status" class="status-offline">🔴 Offline Mode</span>
             </div>
-            <button id="settings-btn" class="btn btn-secondary settings-btn">⚙️ Settings</button>
+            <button id="settings-btn" class="btn btn-secondary settings-btn hover-lift">⚙️ Settings</button>
         </header>
 
-        <div class="timer-section">
+        <div class="timer-section glass-card">
             <div class="main-timer-display">
-                <h3>Total Time Remaining</h3>
+                <h3 class="text-gradient">Total Time Remaining</h3>
                 <div class="time-display">
-                    <span id="total-time-left">30:00</span>
+                    <span id="total-time-left" class="text-gradient">30:00</span>
                 </div>
-                <div class="progress-bar">
+                <div class="progress-bar progress-enhanced">
                     <div class="progress-fill" id="total-progress"></div>
                 </div>
             </div>
 
-
             <div class="controls">
-                <button id="start-btn" class="btn btn-primary">Start Timer</button>
-                <button id="pause-btn" class="btn btn-secondary" disabled>Pause</button>
-                <button id="reset-btn" class="btn btn-secondary">Reset All</button>
+                <button id="start-btn" class="btn btn-primary hover-lift">Start Timer</button>
+                <button id="pause-btn" class="btn btn-secondary hover-lift" disabled>Pause</button>
+                <button id="reset-btn" class="btn btn-secondary hover-lift">Reset All</button>
             </div>
         </div>
 
 
-        <div class="stats-section">
-            <h3>Today's Usage</h3>
-            <div class="stats">
-                <div class="stat">
-                    <span class="stat-label">Time Used:</span>
-                    <span id="time-used">0:00</span>
+        <div class="stats-section glass-card">
+            <h3 class="text-gradient">Today's Usage</h3>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value text-gradient" id="time-used">0:00</div>
+                    <div class="stat-label">Time Used</div>
                 </div>
-                <div class="stat">
-                    <span class="stat-label">Sessions:</span>
-                    <span id="sessions-count">0</span>
+                <div class="stat-card">
+                    <div class="stat-value text-gradient" id="sessions-count">0</div>
+                    <div class="stat-label">Sessions</div>
                 </div>
-                <div class="stat">
-                    <span class="stat-label">Remaining:</span>
-                    <span id="time-remaining">15:00</span>
+                <div class="stat-card">
+                    <div class="stat-value text-gradient" id="time-remaining">15:00</div>
+                    <div class="stat-label">Remaining</div>
                 </div>
             </div>
         </div>
 
-        <div class="progress-section">
-            <h3>Source Progress</h3>
+        <div class="progress-section glass-card">
+            <h3 class="text-gradient">Source Progress</h3>
             <p class="progress-instruction">Click on a source to automatically start its timer:</p>
-            <div class="progress-grid">
-                <div class="progress-item" data-source="bbc-football">
-                    <div class="progress-info">
-                        <span class="progress-icon">⚽</span>
-                        <span class="progress-label">BBC Football</span>
+            <div class="sources-grid">
+                <div class="source-card" data-source="bbc-football">
+                    <div class="source-header">
+                        <div class="source-icon">⚽</div>
+                        <div class="source-info">
+                            <h3>BBC Football</h3>
+                            <p>Sports news and updates</p>
+                        </div>
                         <a class="progress-url" href="https://www.bbc.com/sport/football" target="_blank"
                             rel="noopener noreferrer" title="https://www.bbc.com/sport/football">🔗</a>
                     </div>
-                    <div class="progress-bar">
+                    <div class="progress-bar progress-enhanced">
                         <div class="progress-fill" id="bbc-football-progress"></div>
                     </div>
                     <div class="progress-time">
@@ -76,14 +78,17 @@
                     </div>
                 </div>
 
-                <div class="progress-item" data-source="bbc-headlines">
-                    <div class="progress-info">
-                        <span class="progress-icon">📰</span>
-                        <span class="progress-label">BBC Headlines</span>
+                <div class="source-card" data-source="bbc-headlines">
+                    <div class="source-header">
+                        <div class="source-icon">📰</div>
+                        <div class="source-info">
+                            <h3>BBC Headlines</h3>
+                            <p>Breaking news and current affairs</p>
+                        </div>
                         <a class="progress-url" href="https://www.bbc.com/news" target="_blank"
                             rel="noopener noreferrer" title="https://www.bbc.com/news">🔗</a>
                     </div>
-                    <div class="progress-bar">
+                    <div class="progress-bar progress-enhanced">
                         <div class="progress-fill" id="bbc-headlines-progress"></div>
                     </div>
                     <div class="progress-time">
@@ -91,14 +96,17 @@
                     </div>
                 </div>
 
-                <div class="progress-item" data-source="rte-headlines">
-                    <div class="progress-info">
-                        <span class="progress-icon">🇮🇪</span>
-                        <span class="progress-label">RTE Headlines</span>
+                <div class="source-card" data-source="rte-headlines">
+                    <div class="source-header">
+                        <div class="source-icon">🇮🇪</div>
+                        <div class="source-info">
+                            <h3>RTE Headlines</h3>
+                            <p>Irish news and current events</p>
+                        </div>
                         <a class="progress-url" href="https://www.rte.ie/news/" target="_blank"
                             rel="noopener noreferrer" title="https://www.rte.ie/news/">🔗</a>
                     </div>
-                    <div class="progress-bar">
+                    <div class="progress-bar progress-enhanced">
                         <div class="progress-fill" id="rte-headlines-progress"></div>
                     </div>
                     <div class="progress-time">
@@ -106,14 +114,17 @@
                     </div>
                 </div>
 
-                <div class="progress-item" data-source="guardian-headlines">
-                    <div class="progress-info">
-                        <span class="progress-icon">🛡️</span>
-                        <span class="progress-label">Guardian Headlines</span>
+                <div class="source-card" data-source="guardian-headlines">
+                    <div class="source-header">
+                        <div class="source-icon">🛡️</div>
+                        <div class="source-info">
+                            <h3>Guardian Headlines</h3>
+                            <p>Independent journalism and analysis</p>
+                        </div>
                         <a class="progress-url" href="https://www.theguardian.com/uk" target="_blank"
                             rel="noopener noreferrer" title="https://www.theguardian.com/uk">🔗</a>
                     </div>
-                    <div class="progress-bar">
+                    <div class="progress-bar progress-enhanced">
                         <div class="progress-fill" id="guardian-headlines-progress"></div>
                     </div>
                     <div class="progress-time">
@@ -121,14 +132,17 @@
                     </div>
                 </div>
 
-                <div class="progress-item" data-source="guardian-opinion">
-                    <div class="progress-info">
-                        <span class="progress-icon">💭</span>
-                        <span class="progress-label">Guardian Opinion</span>
+                <div class="source-card" data-source="guardian-opinion">
+                    <div class="source-header">
+                        <div class="source-icon">💭</div>
+                        <div class="source-info">
+                            <h3>Guardian Opinion</h3>
+                            <p>Commentary and opinion pieces</p>
+                        </div>
                         <a class="progress-url" href="https://www.theguardian.com/commentisfree" target="_blank"
                             rel="noopener noreferrer" title="https://www.theguardian.com/commentisfree">🔗</a>
                     </div>
-                    <div class="progress-bar">
+                    <div class="progress-bar progress-enhanced">
                         <div class="progress-fill" id="guardian-opinion-progress"></div>
                     </div>
                     <div class="progress-time">
@@ -136,14 +150,17 @@
                     </div>
                 </div>
 
-                <div class="progress-item" data-source="cnn">
-                    <div class="progress-info">
-                        <span class="progress-icon">🌍</span>
-                        <span class="progress-label">CNN</span>
+                <div class="source-card" data-source="cnn">
+                    <div class="source-header">
+                        <div class="source-icon">🌍</div>
+                        <div class="source-info">
+                            <h3>CNN</h3>
+                            <p>Global news and breaking stories</p>
+                        </div>
                         <a class="progress-url" href="https://www.cnn.com/" target="_blank" rel="noopener noreferrer"
                             title="https://www.cnn.com/">🔗</a>
                     </div>
-                    <div class="progress-bar">
+                    <div class="progress-bar progress-enhanced">
                         <div class="progress-fill" id="cnn-progress"></div>
                     </div>
                     <div class="progress-time">
@@ -160,10 +177,10 @@
 
     <!-- Settings Modal -->
     <div id="settings-modal" class="modal hidden">
-        <div class="modal-content">
+        <div class="modal-content glass-card">
             <div class="modal-header">
-                <h2>⚙️ Settings</h2>
-                <button id="close-modal" class="close-btn">&times;</button>
+                <h2 class="text-gradient">⚙️ Settings</h2>
+                <button id="close-modal" class="close-btn hover-lift">&times;</button>
             </div>
 
             <div class="modal-body">
@@ -171,7 +188,7 @@
                     <h3>Daily Settings</h3>
                     <div class="setting">
                         <label for="total-time-limit">Total daily time limit (minutes):</label>
-                        <input type="number" id="total-time-limit" value="30" min="1" max="120">
+                        <input type="number" id="total-time-limit" class="form-input" value="30" min="1" max="120">
                     </div>
                     <div class="setting">
                         <label for="auto-start">Auto-start timer:</label>

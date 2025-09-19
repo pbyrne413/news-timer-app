@@ -61,7 +61,7 @@ class NewsTimer {
                     };
                     
                     // Create DOM elements for sources that don't exist in the HTML
-                    if (!document.querySelector(`.progress-item[data-source="${source.key}"]`)) {
+                    if (!document.querySelector(`.source-card[data-source="${source.key}"]`)) {
                         this.addSourceToUI(source.key, source.name, source.url, source.icon);
                     }
                 });
@@ -77,7 +77,7 @@ class NewsTimer {
                         };
                         
                         // Create DOM elements for sources that don't exist in the HTML
-                        if (!document.querySelector(`.progress-item[data-source="${source.key}"]`)) {
+                        if (!document.querySelector(`.source-card[data-source="${source.key}"]`)) {
                             this.addSourceToUI(source.key, source.name, source.url, source.icon);
                         }
                     }
@@ -229,7 +229,7 @@ class NewsTimer {
             this.sourceUsedElements[source] = document.getElementById(`${source}-used`);
             this.sourceTotalElements[source] = document.getElementById(`${source}-total`);
             this.sourceAllocationElements[source] = document.getElementById(`${source}-alloc`);
-            this.progressItems[source] = document.querySelector(`.progress-item[data-source="${source}"]`);
+            this.progressItems[source] = document.querySelector(`.source-card[data-source="${source}"]`);
             
             // Set up event listeners for progress items (source clicking)
             if (this.progressItems[source]) {
@@ -691,7 +691,7 @@ class NewsTimer {
     async deleteSource(sourceKey) {
         // Confirm deletion
         const sourceName = this.sourceTimers[sourceKey] ? 
-            document.querySelector(`.progress-item[data-source="${sourceKey}"] .progress-label`)?.textContent || sourceKey : 
+            document.querySelector(`.source-card[data-source="${sourceKey}"] .source-info h3`)?.textContent || sourceKey : 
             sourceKey;
         
         if (!confirm(`Are you sure you want to delete "${sourceName}"? This action cannot be undone.`)) {
@@ -706,7 +706,7 @@ class NewsTimer {
             delete this.sourceTimers[sourceKey];
             
             // Remove from UI
-            const progressItem = document.querySelector(`.progress-item[data-source="${sourceKey}"]`);
+            const progressItem = document.querySelector(`.source-card[data-source="${sourceKey}"]`);
             if (progressItem) {
                 progressItem.remove();
             }
@@ -756,9 +756,9 @@ class NewsTimer {
             allocationItem.setAttribute('data-source', source);
             
             // Get source info (name, icon) - we need to find this from the DOM or API
-            const progressItem = document.querySelector(`.progress-item[data-source="${source}"]`);
-            const sourceName = progressItem ? progressItem.querySelector('.progress-label').textContent : source;
-            const sourceIcon = progressItem ? progressItem.querySelector('.progress-icon').textContent : '📰';
+            const progressItem = document.querySelector(`.source-card[data-source="${source}"]`);
+            const sourceName = progressItem ? progressItem.querySelector('.source-info h3').textContent : source;
+            const sourceIcon = progressItem ? progressItem.querySelector('.source-icon').textContent : '📰';
             
             // Check if this is a default source (no delete button)
             const defaultSources = ['bbc-football', 'bbc-headlines', 'rte-headlines', 'guardian-headlines', 'guardian-opinion', 'cnn'];
@@ -1022,26 +1022,34 @@ class NewsTimer {
         const sanitizedSourceName = this.sanitizeHtml(sourceName);
         
         // Get the progress grid container
-        const progressGrid = document.querySelector('.progress-grid');
+        const progressGrid = document.querySelector('.sources-grid');
         
         // Create the new progress item using DOM methods instead of innerHTML
         const progressItem = document.createElement('div');
-        progressItem.className = 'progress-item';
+        progressItem.className = 'source-card';
         progressItem.setAttribute('data-source', sanitizedSourceKey);
         
-        const progressInfo = document.createElement('div');
-        progressInfo.className = 'progress-info';
+        const sourceHeader = document.createElement('div');
+        sourceHeader.className = 'source-header';
         
-        const progressIcon = document.createElement('span');
-        progressIcon.className = 'progress-icon';
-        progressIcon.textContent = sourceIcon;
+        const sourceIconDiv = document.createElement('div');
+        sourceIconDiv.className = 'source-icon';
+        sourceIconDiv.textContent = sourceIcon;
         
-        const progressLabel = document.createElement('span');
-        progressLabel.className = 'progress-label';
-        progressLabel.textContent = sanitizedSourceName;
+        const sourceInfo = document.createElement('div');
+        sourceInfo.className = 'source-info';
         
-        progressInfo.appendChild(progressIcon);
-        progressInfo.appendChild(progressLabel);
+        const sourceTitle = document.createElement('h3');
+        sourceTitle.textContent = sanitizedSourceName;
+        
+        const sourceDescription = document.createElement('p');
+        sourceDescription.textContent = 'News source';
+        
+        sourceInfo.appendChild(sourceTitle);
+        sourceInfo.appendChild(sourceDescription);
+        
+        sourceHeader.appendChild(sourceIconDiv);
+        sourceHeader.appendChild(sourceInfo);
         
         // Add URL if provided
         if (sourceUrl) {
@@ -1052,11 +1060,11 @@ class NewsTimer {
             progressUrl.rel = 'noopener noreferrer';
             progressUrl.textContent = '🔗';
             progressUrl.title = sourceUrl;
-            progressInfo.appendChild(progressUrl);
+            sourceHeader.appendChild(progressUrl);
         }
         
         const progressBar = document.createElement('div');
-        progressBar.className = 'progress-bar';
+        progressBar.className = 'progress-bar progress-enhanced';
         
         const progressFill = document.createElement('div');
         progressFill.className = 'progress-fill';
@@ -1079,7 +1087,7 @@ class NewsTimer {
         progressTime.appendChild(document.createTextNode(' / '));
         progressTime.appendChild(totalSpan);
         
-        progressItem.appendChild(progressInfo);
+        progressItem.appendChild(sourceHeader);
         progressItem.appendChild(progressBar);
         progressItem.appendChild(progressTime);
         
@@ -1128,7 +1136,7 @@ class NewsTimer {
         this.sourceAllocationElements[sourceKey] = document.getElementById(`${sourceKey}-alloc`);
         
         // Add to progress items
-        this.progressItems[sourceKey] = document.querySelector(`.progress-item[data-source="${sourceKey}"]`);
+        this.progressItems[sourceKey] = document.querySelector(`.source-card[data-source="${sourceKey}"]`);
         
         // Add event listeners for the new elements
         if (this.progressItems[sourceKey]) {
@@ -1141,7 +1149,7 @@ class NewsTimer {
     
     getSourceDisplayName(source) {
         // Try to get from UI first (for dynamically added sources)
-        const progressItem = document.querySelector(`.progress-item[data-source="${source}"] .progress-label`);
+        const progressItem = document.querySelector(`.source-card[data-source="${source}"] .source-info h3`);
         if (progressItem) {
             return progressItem.textContent;
         }
