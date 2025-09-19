@@ -127,14 +127,10 @@ class Database {
   }
 
   async initializeDefaultData() {
-    // Check if we already have data
-    const existingSources = await this.client.execute('SELECT COUNT(*) as count FROM news_sources');
-    if (existingSources.rows[0].count > 0) return;
-
-    // SECURITY: Validate default data to prevent injection
-    // No default sources to validate - app starts empty
-
-    // No default sources - app starts completely empty for user customization
+    // Clear old hardcoded sources to start fresh
+    await this.client.execute('DELETE FROM news_sources');
+    await this.client.execute('DELETE FROM daily_usage');
+    await this.client.execute('DELETE FROM user_settings');
 
     // Create default user settings
     await this.client.execute({
@@ -142,7 +138,7 @@ class Database {
       args: [1800, false]
     });
 
-    log.info('Default data initialized');
+    log.info('Default data initialized - database cleared and reset');
   }
 
   // News Sources methods
