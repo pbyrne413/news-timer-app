@@ -16,9 +16,6 @@ export default asyncHandler(async function handler(req, res) {
     return;
   }
 
-  // Skip rate limiting for now to test if that's causing the issue
-  // rateLimit(req, res, () => {});
-
   // Initialize container if not already done
   await container.initialize();
 
@@ -28,7 +25,10 @@ export default asyncHandler(async function handler(req, res) {
   if (req.method === 'GET') {
     await sourceController.getSources(req, res);
   } else if (req.method === 'POST') {
-    // Skip validation for now to test if that's causing the issue
+    // Add favicon_url to request body if URL is provided
+    if (req.body && req.body.url) {
+      req.body.favicon_url = `/api/favicon?url=${encodeURIComponent(req.body.url)}`;
+    }
     await sourceController.addSource(req, res);
   } else {
     res.setHeader('Allow', ['GET', 'POST']);
