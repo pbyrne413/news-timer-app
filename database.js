@@ -8,10 +8,7 @@ class Database {
   constructor() {
     this.client = createClient({
       url: config.database.url,
-      authToken: config.database.authToken,
-      // Turso optimizations for serverless
-      intMode: 'number', // Better JSON serialization
-      syncInterval: 60, // Sync every 60 seconds for embedded replicas
+      authToken: config.database.authToken
     });
     this._initialized = false;
     this._initializing = false; // SECURITY: Prevent race conditions
@@ -31,18 +28,10 @@ class Database {
     
     this._initializing = true;
     try {
-      console.log('🔄 Database initialization starting...');
-      // Add timeout to prevent hanging
-      await Promise.race([
-        this.initializeTables(),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Database initialization timeout')), 10000)
-        )
-      ]);
+      await this.initializeTables();
       this._initialized = true;
-      console.log('✅ Database initialization completed');
     } catch (error) {
-      console.error('❌ Database initialization failed:', error);
+      console.error('Database initialization failed:', error);
       throw error;
     } finally {
       this._initializing = false;
