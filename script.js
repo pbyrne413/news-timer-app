@@ -1139,14 +1139,7 @@ class NewsTimer {
             sourceHeader.appendChild(progressUrl);
         }
         
-        // Add delete button
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'btn-delete-source';
-        deleteBtn.setAttribute('data-source', sanitizedSourceKey);
-        deleteBtn.title = 'Delete source';
-        deleteBtn.textContent = '🗑️';
-        deleteBtn.addEventListener('click', () => this.deleteSource(sanitizedSourceKey));
-        sourceHeader.appendChild(deleteBtn);
+        // Delete button is only added in the settings modal via populateAllocationGrid
         
         const progressBar = document.createElement('div');
         progressBar.className = 'progress-bar progress-enhanced';
@@ -1401,6 +1394,7 @@ class NewsTimer {
                 <label for="${sourceKey}-alloc">${sourceIcon} ${sourceName}:</label>
                 <input type="number" id="${sourceKey}-alloc" value="${Math.floor(sourceData.allocated / 60)}" min="0" max="30" data-source="${sourceKey}">
                 <span>minutes</span>
+                <button class="btn-delete-source" data-source="${sourceKey}" title="Delete source">🗑️</button>
             `;
             
             allocationGrid.appendChild(allocationItem);
