@@ -159,15 +159,10 @@ class Database {
     
     console.log('🚀 Executing INSERT query...');
     try {
-      const result = await Promise.race([
-        this.client.execute({
-          sql: 'INSERT INTO news_sources (key, name, icon, url, favicon_url, default_allocation) VALUES (?, ?, ?, ?, ?, ?)',
-          args: [key, name, icon, url, favicon_url, allocation]
-        }),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Database query timeout')), 10000)
-        )
-      ]);
+      const result = await this.client.execute({
+        sql: 'INSERT INTO news_sources (key, name, icon, url, favicon_url, default_allocation) VALUES (?, ?, ?, ?, ?, ?)',
+        args: [key, name, icon, url || null, favicon_url || null, allocation]
+      });
       
       const duration = Date.now() - startTime;
       console.log('✅ INSERT query completed, lastInsertRowid:', result.lastInsertRowid, `(${duration}ms)`);

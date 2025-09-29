@@ -71,13 +71,10 @@ export default asyncHandler(async function handler(req, res) {
       console.log('🚀 Processing POST request to /sources');
       console.log('Request body:', req.body);
       
-      // Add timeout for POST request
+      // Process POST request without additional timeout (already handled in service)
       const startTime = Date.now();
       try {
-        await Promise.race([
-          sourceController.addSource(req, res),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Add source timeout')), 8000))
-        ]);
+        await sourceController.addSource(req, res);
         console.log(`✅ Source added successfully in ${Date.now() - startTime}ms`);
       } catch (error) {
         console.error(`❌ Source addition failed after ${Date.now() - startTime}ms:`, error);
