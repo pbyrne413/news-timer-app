@@ -14,30 +14,15 @@ export const corsMiddleware = (req, res, next) => {
   const origin = req.headers.origin;
   const allowedOrigins = config.api.corsOrigins;
   
-  // Only allow specific origins in production
+  // Allow all origins in development, specific origins in production
   if (config.server.env === 'production') {
-    if (allowedOrigins.includes('*')) {
-      log.security('Wildcard CORS origin detected in production', { 
-        origin: origin,
-        environment: config.server.env 
-      });
-    }
-    
     if (origin && (allowedOrigins.includes(origin) || allowedOrigins.includes('*'))) {
       res.setHeader('Access-Control-Allow-Origin', origin);
     }
   } else {
-    // Development: allow localhost and configured origins
-    const isDevelopmentOrigin = origin && (
-      origin.includes('localhost') || 
-      origin.includes('127.0.0.1') ||
-      allowedOrigins.includes(origin) ||
-      allowedOrigins.includes('*')
-    );
-    
-    if (isDevelopmentOrigin || allowedOrigins.includes('*')) {
-      res.setHeader('Access-Control-Allow-Origin', origin || '*');
-    }
+    // Development: allow all origins
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    log.info('Development mode: CORS allowing all origins');
   }
   
   // Security headers

@@ -1,6 +1,38 @@
 {
   "version": 2,
   "outputDirectory": ".",
+  "routes": [
+    {
+      "src": "/api/sources",
+      "methods": ["GET", "POST"],
+      "dest": "/api/sources/index.js"
+    },
+    {
+      "src": "/api/sources/(?<sourceKey>[^/]+)",
+      "methods": ["PUT", "DELETE"],
+      "dest": "/api/sources/[sourceKey]/index.js"
+    },
+    {
+      "src": "/api/health",
+      "methods": ["GET"],
+      "dest": "/api/health.js"
+    },
+    {
+      "src": "/api/settings",
+      "methods": ["GET", "PUT"],
+      "dest": "/api/settings/index.js"
+    },
+    {
+      "src": "/api/usage",
+      "methods": ["POST"],
+      "dest": "/api/usage/index.js"
+    },
+    {
+      "src": "/api/reset",
+      "methods": ["POST"],
+      "dest": "/api/reset/index.js"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
