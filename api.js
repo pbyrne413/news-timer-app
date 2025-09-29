@@ -77,8 +77,11 @@ class ApiService {
 
   // Update source allocation
   async updateSourceAllocation(sourceKey, allocation) {
-    return this.request(`/sources/${sourceKey}/allocation`, {
+    return this.request(`/sources/${sourceKey}`, {
       method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: { allocation },
     });
   }
