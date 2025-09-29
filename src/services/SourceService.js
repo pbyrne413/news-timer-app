@@ -27,6 +27,7 @@ export class SourceService extends BaseService {
 
   // Add new source with business validation
   async addSource(sourceData) {
+    console.log('🎯 SourceService.addSource called with:', sourceData);
     // Use longer timeout for source addition (7 seconds)
     return this.executeWithConnection(async () => {
       const startTime = Date.now();

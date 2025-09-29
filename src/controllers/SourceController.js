@@ -14,6 +14,7 @@ export class SourceController extends BaseController {
 
   // POST /api/sources - Add new source
   addSource = this.createHandler(async (req, res) => {
+    console.log('🎯 SourceController.addSource called');
     const log = this.container.get('logger').child({ method: 'addSource' });
     log.info('Adding new source', { body: req.body });
 
