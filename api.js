@@ -13,11 +13,11 @@ class ApiService {
     });
 
     const config = {
+      ...options,
       headers: {
         'Content-Type': 'application/json',
-        ...options.headers,
+        ...(options.headers || {}),
       },
-      ...options,
     };
 
     if (config.body && typeof config.body === 'object') {
@@ -112,6 +112,9 @@ class ApiService {
   async addSource(sourceData) {
     return this.request('/sources', {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: sourceData,
     });
   }
