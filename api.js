@@ -22,9 +22,17 @@ class ApiService {
 
     if (config.body && typeof config.body === 'object') {
       config.body = JSON.stringify(config.body);
+      console.log('📦 Serialized request body:', config.body);
     }
 
     try {
+      console.log('🚀 Making fetch request with config:', {
+        url,
+        method: config.method,
+        headers: config.headers,
+        bodyLength: config.body ? config.body.length : 0
+      });
+      
       const startTime = Date.now();
       const response = await fetch(url, config);
       const duration = Date.now() - startTime;
@@ -40,7 +48,8 @@ class ApiService {
         console.error(`❌ API Error from ${endpoint}:`, {
           status: response.status,
           statusText: response.statusText,
-          error: errorText
+          error: errorText,
+          headers: Object.fromEntries(response.headers.entries())
         });
         throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
       }
