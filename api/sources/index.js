@@ -64,29 +64,8 @@ export default asyncHandler(async function handler(req, res) {
   const sourceController = new SourceController(container);
 
   try {
-    if (req.method === 'GET') {
-      // GET requests have been working, no need for timeout
-      await sourceController.getSources(req, res);
-    } else if (req.method === 'POST') {
-      console.log('🚀 Processing POST request to /sources');
-      console.log('Request body:', req.body);
-      
-      // Process POST request without additional timeout (already handled in service)
-      const startTime = Date.now();
-      try {
-        await sourceController.addSource(req, res);
-        console.log(`✅ Source added successfully in ${Date.now() - startTime}ms`);
-      } catch (error) {
-        console.error(`❌ Source addition failed after ${Date.now() - startTime}ms:`, error);
-        throw error;
-      }
-    } else {
-      res.setHeader('Allow', ['GET', 'POST']);
-      res.status(405).json({ 
-        error: `Method ${req.method} Not Allowed`,
-        code: 'METHOD_NOT_ALLOWED'
-      });
-    }
+    console.log('🚀 Calling handleSources with method:', req.method);
+    await sourceController.handleSources(req, res);
   } catch (error) {
     console.error('Request failed:', error);
     if (error.message.includes('timeout')) {
