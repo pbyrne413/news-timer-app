@@ -175,10 +175,11 @@ class ServiceContainer {
 ## 🚀 Vercel Serverless Compatibility
 
 ### Architecture Adaptations
-- **Function-per-Endpoint**: Each API route is a separate Vercel function
+- **Optimized Function Distribution**: Strategic consolidation of related endpoints into single functions
 - **Shared Architecture**: Common patterns through dependency injection
 - **Cold Start Optimization**: Singleton containers reduce initialization overhead
 - **Stateless Design**: No shared state between function invocations
+- **Resource Efficiency**: Careful management of function count for deployment constraints
 
 ### Performance Optimizations
 - **Connection Pooling**: Reuse database connections

@@ -8,9 +8,20 @@ export class BaseController {
 
   // Factory method for creating route handlers with dependency injection
   createHandler(handlerMethod) {
-    return asyncHandler(async (req, res, next) => {
-      await handlerMethod.call(this, req, res, next);
-    });
+    return async (req, res, next) => {
+      console.log('🎯 BaseController.createHandler executing method:', handlerMethod.name);
+      try {
+        await handlerMethod.call(this, req, res, next);
+        console.log('✅ Handler completed successfully');
+      } catch (error) {
+        console.error('❌ Handler failed:', error);
+        if (next) {
+          next(error);
+        } else {
+          throw error;
+        }
+      }
+    };
   }
 
   // Standardized success response

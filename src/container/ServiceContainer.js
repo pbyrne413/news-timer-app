@@ -3,6 +3,7 @@ import Database from '../../database.js';
 import { SourceService } from '../services/SourceService.js';
 import { UsageService } from '../services/UsageService.js';
 import { SettingsService } from '../services/SettingsService.js';
+import { createLogger } from '../utils/Logger.js';
 
 export class ServiceContainer {
   constructor() {
@@ -53,6 +54,10 @@ export class ServiceContainer {
   }
 
   _registerCoreServices() {
+    // Register logger as singleton
+    const logger = createLogger('API');
+    this.register('logger', () => logger, { singleton: true });
+
     // Register database as singleton
     this.register('database', () => new Database(), { singleton: true });
 

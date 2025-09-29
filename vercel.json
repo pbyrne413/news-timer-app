@@ -1,6 +1,14 @@
 {
   "version": 2,
   "outputDirectory": ".",
+  "rewrites": [
+    { "source": "/api/sources", "destination": "/api/sources/index.js" },
+    { "source": "/api/sources/:sourceKey", "destination": "/api/sources/[sourceKey]/index.js" },
+    { "source": "/api/health", "destination": "/api/health.js" },
+    { "source": "/api/settings", "destination": "/api/settings/index.js" },
+    { "source": "/api/usage", "destination": "/api/usage/index.js" },
+    { "source": "/api/reset", "destination": "/api/reset/index.js" }
+  ],
   "headers": [
     {
       "source": "/(.*)",

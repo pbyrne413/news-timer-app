@@ -14,6 +14,7 @@ export class SourceController extends BaseController {
 
   // POST /api/sources - Add new source
   addSource = this.createHandler(async (req, res) => {
+    console.log('🎯 SourceController.addSource called');
     const log = this.container.get('logger').child({ method: 'addSource' });
     log.info('Adding new source', { body: req.body });
 
@@ -32,15 +33,15 @@ export class SourceController extends BaseController {
   });
 
   // Combined handler for both GET and POST
-  handleSources = this.createHandler(async (req, res) => {
+  handleSources = async (req, res) => {
     if (req.method === 'GET') {
-      return this.getSources(req, res);
+      await this.getSources(req, res);
     } else if (req.method === 'POST') {
-      return this.addSource(req, res);
+      await this.addSource(req, res);
     } else {
-      return this.sendMethodNotAllowed(res, ['GET', 'POST']);
+      this.sendMethodNotAllowed(res, ['GET', 'POST']);
     }
-  });
+  };
 
   // PUT /api/sources/:sourceKey/allocation - Update allocation
   updateAllocation = this.createHandler(async (req, res) => {

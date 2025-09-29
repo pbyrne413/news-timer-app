@@ -21,26 +21,39 @@ export default asyncHandler(async function handler(req, res) {
     console.log('📝 Received POST request to /sources');
     console.log('Request headers:', req.headers);
     
-    // Get raw body from request
-    const rawBody = await new Promise((resolve) => {
-      let body = '';
-      req.on('data', chunk => {
-        body += chunk.toString();
-      });
-      req.on('end', () => {
-        resolve(body);
-      });
-    });
-    
-    console.log('Raw body received:', rawBody);
-    
     try {
-      req.body = JSON.parse(rawBody);
-      console.log('Parsed request body:', req.body);
+      // Handle both streaming and pre-parsed body
+      if (typeof req.body === 'undefined') {
+        if (req.rawBody) {
+          console.log('Using rawBody from request');
+          req.body = JSON.parse(req.rawBody);
+        } else {
+          console.log('Reading body from request stream');
+          const rawBody = await new Promise((resolve) => {
+            let body = '';
+            req.on('data', chunk => {
+              body += chunk.toString();
+            });
+            req.on('end', () => {
+              resolve(body);
+            });
+          });
+          console.log('Raw body received:', rawBody);
+          req.body = JSON.parse(rawBody);
+        }
+      } else {
+        console.log('Body already parsed:', req.body);
+      }
+      
+      console.log('Final parsed request body:', req.body);
     } catch (error) {
       console.error('Failed to parse request body:', error);
-      console.error('Raw body was:', rawBody);
-      res.status(400).json({ error: 'Invalid JSON body' });
+      console.error('Request body state:', {
+        hasBody: typeof req.body !== 'undefined',
+        hasRawBody: typeof req.rawBody !== 'undefined',
+        contentType: req.headers['content-type']
+      });
+      res.status(400).json({ error: 'Invalid JSON body', details: error.message });
       return;
     }
   }
@@ -49,47 +62,27 @@ export default asyncHandler(async function handler(req, res) {
   // rateLimit(req, res, () => {});
 
   // Initialize container with timeout
+  console.log('🔄 Initializing service container...');
   try {
     await Promise.race([
       container.initialize(),
       new Promise((_, reject) => setTimeout(() => reject(new Error('Container initialization timeout')), 5000))
     ]);
+    console.log('✅ Container initialized successfully');
   } catch (error) {
-    console.error('Container initialization failed:', error);
-    res.status(500).json({ error: 'Service initialization failed' });
+    console.error('❌ Container initialization failed:', error);
+    res.status(500).json({ error: 'Service initialization failed', details: error.message });
     return;
   }
 
   // Create controller instance
+  console.log('🎮 Creating source controller...');
   const sourceController = new SourceController(container);
+  console.log('✅ Controller created successfully');
 
   try {
-    if (req.method === 'GET') {
-      // GET requests have been working, no need for timeout
-      await sourceController.getSources(req, res);
-    } else if (req.method === 'POST') {
-      console.log('🚀 Processing POST request to /sources');
-      console.log('Request body:', req.body);
-      
-      // Add timeout for POST request
-      const startTime = Date.now();
-      try {
-        await Promise.race([
-          sourceController.addSource(req, res),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Add source timeout')), 8000))
-        ]);
-        console.log(`✅ Source added successfully in ${Date.now() - startTime}ms`);
-      } catch (error) {
-        console.error(`❌ Source addition failed after ${Date.now() - startTime}ms:`, error);
-        throw error;
-      }
-    } else {
-      res.setHeader('Allow', ['GET', 'POST']);
-      res.status(405).json({ 
-        error: `Method ${req.method} Not Allowed`,
-        code: 'METHOD_NOT_ALLOWED'
-      });
-    }
+    console.log('🚀 Calling handleSources with method:', req.method);
+    await sourceController.handleSources(req, res);
   } catch (error) {
     console.error('Request failed:', error);
     if (error.message.includes('timeout')) {

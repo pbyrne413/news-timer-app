@@ -13,18 +13,26 @@ class ApiService {
     });
 
     const config = {
+      ...options,
       headers: {
         'Content-Type': 'application/json',
-        ...options.headers,
+        ...(options.headers || {}),
       },
-      ...options,
     };
 
     if (config.body && typeof config.body === 'object') {
       config.body = JSON.stringify(config.body);
+      console.log('📦 Serialized request body:', config.body);
     }
 
     try {
+      console.log('🚀 Making fetch request with config:', {
+        url,
+        method: config.method,
+        headers: config.headers,
+        bodyLength: config.body ? config.body.length : 0
+      });
+      
       const startTime = Date.now();
       const response = await fetch(url, config);
       const duration = Date.now() - startTime;
@@ -40,7 +48,8 @@ class ApiService {
         console.error(`❌ API Error from ${endpoint}:`, {
           status: response.status,
           statusText: response.statusText,
-          error: errorText
+          error: errorText,
+          headers: Object.fromEntries(response.headers.entries())
         });
         throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
       }
@@ -77,8 +86,11 @@ class ApiService {
 
   // Update source allocation
   async updateSourceAllocation(sourceKey, allocation) {
-    return this.request(`/sources/${sourceKey}/allocation`, {
+    return this.request(`/sources/${sourceKey}`, {
       method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: { allocation },
     });
   }
@@ -112,6 +124,9 @@ class ApiService {
   async addSource(sourceData) {
     return this.request('/sources', {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: sourceData,
     });
   }

@@ -52,11 +52,16 @@ if (process.env.NODE_ENV === 'production' && !process.env.VERCEL) {
 
 // Create context-specific loggers
 export const createLogger = (context = 'App') => {
-  return {
+  const baseLogger = {
     info: (message, meta = {}) => logger.info(message, { context, ...meta }),
     warn: (message, meta = {}) => logger.warn(message, { context, ...meta }),
     error: (message, meta = {}) => logger.error(message, { context, ...meta }),
     debug: (message, meta = {}) => logger.debug(message, { context, ...meta }),
+    child: (childContext) => createLogger(`${context}:${childContext}`)
+  };
+
+  return {
+    ...baseLogger,
     
     // Specialized logging methods
     http: (req, res, responseTime) => {
